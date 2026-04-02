@@ -1,308 +1,364 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>OutboundPro Pro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OutboundPro - Cold Storage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #e2e8f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
+        #app-container { max-width: 480px; margin: 0 auto; background-color: #f8fafc; height: 100vh; height: 100dvh; position: relative; overflow-y: auto; overflow-x: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .counter-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-weight: bold; font-size: 18px; transition: all 0.2s; }
+        .counter-btn:active { transform: scale(0.9); }
+        .btn-minus { background: #f1f5f9; color: #64748b; }
+        .btn-plus.chiller { background: #3b82f6; color: white; }
+        .btn-plus.freezer { background: #06b6d4; color: white; }
+        .btn-plus.coklat { background: #f59e0b; color: white; }
+        
+        .bottom-nav { position: sticky; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #f1f5f9; display: flex; justify-content: space-around; padding: 12px 0; z-index: 40; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: #94a3b8; text-decoration: none; }
+        .nav-item.active { color: #16a34a; }
+        .nav-item i { font-size: 20px; }
 
-<!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-<!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com"></script>
+        /* Loader */
+        .loader-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); z-index: 60; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #16a34a; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-<script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: { extend: { colors: { primary: '#00880D', surface: '#F4F6F9', darkSurface: '#121212', darkCard: '#1E1E1E', wa: '#25D366' } } }
-  }
-</script>
+        /* Modal / Bottom Sheet */
+        .bottom-sheet { position: absolute; bottom: -100%; left: 0; right: 0; background: white; border-radius: 24px 24px 0 0; padding: 24px; z-index: 50; transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); max-height: 80%; display: flex; flex-direction: column; }
+        .bottom-sheet.show { bottom: 0; }
+        .overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px); z-index: 45; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .overlay.show { opacity: 1; pointer-events: auto; }
+        
+        .list-group { overflow-y: auto; flex-grow: 1; margin-top: 16px; margin-bottom: 20px;}
+        .group-item { padding: 16px; border-bottom: 1px solid #f1f5f9; font-weight: 700; font-size: 16px; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
+        .group-item:active { background-color: #f8fafc; }
+        .group-item i { color: #60a5fa; font-size: 14px; }
 
-<style>
-  ::-webkit-scrollbar { width: 0px; height: 0px; }
-  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html { width: 100%; height: 100%; overflow: hidden; }
-  body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #E2E8F0; overflow: hidden; display: flex; flex-direction: column; font-family: 'DM Sans', sans-serif;}
-  #app-container { flex: 1; min-height: 0; width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; background-color: #F4F6F9; position: relative; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.1); }
-  .main-content { flex: 1; width: 100%; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; }
-  nav { height: 75px; width: 100%; background: white; border-top: 1px solid #edf2f7; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); z-index: 50; flex-shrink: 0; }
-  nav button { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; }
-  nav button.active::after { content: ''; position: absolute; top: 0; width: 20px; height: 4px; background: #00880D; border-radius: 0 0 4px 4px; }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .spinner { display: inline-block; width: 1.2rem; height: 1.2rem; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
-  .progress-bar { transition: width 1s cubic-bezier(0.65, 0, 0.35, 1); }
-  .modal-panel { position: absolute; left: 0; right: 0; width: 100%; bottom: -120%; z-index: 150; visibility: hidden; transition: bottom 0.3s ease-out, visibility 0.3s; }
-  .modal-panel.open { bottom: 0; visibility: visible; }
-  .toast { position: absolute; bottom: 100px; left: 50%; width: max-content; max-width: 90%; transform: translateX(-50%) translateY(50px); opacity: 0; visibility: hidden; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, visibility 0.4s; z-index: 200; }
-  .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-</style>
+        .toast { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: white; padding: 12px 24px; border-radius: 100px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 10px; opacity: 0; transition: all 0.4s; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: max-content;}
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast-error { background: #b91c1c; }
+    </style>
 </head>
-<body class="dark:bg-black">
+<body>
 
-<div id="app-container" class="bg-surface dark:bg-darkSurface transition-colors">
-  <!-- HEADER -->
-  <header class="bg-white dark:bg-darkCard px-5 py-4 shadow-sm z-30 flex justify-between items-center flex-shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-green-400 flex items-center justify-center text-white text-xl shadow-lg">📦</div>
-      <div>
-        <h1 class="text-lg font-bold text-gray-900 dark:text-white leading-tight">Outbound<span class="text-primary">Pro</span></h1>
-        <p class="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Cold Storage</p>
-      </div>
-    </div>
-    <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xl outline-none hover:scale-110 transition-transform"><span id="dark-icon">🌓</span></button>
-  </header>
-
-  <!-- AREA KONTEN -->
-  <div class="main-content">
+<div id="app-container">
     
-    <!-- TAB 1: FORM -->
-    <main id="tab-input" class="p-5 space-y-4">
-      <div class="flex justify-between items-center">
-        <h2 id="form-title" class="text-xl font-bold text-gray-800 dark:text-gray-100">Catat Pemuatan</h2>
-        <div class="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded text-[10px] font-bold text-primary flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> LIVE</div>
-      </div>
-      <input type="hidden" id="edit-index" value="">
-
-      <!-- Card Kendaraan -->
-      <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="space-y-1">
-            <label class="text-[10px] font-bold text-gray-400 uppercase">Group *</label>
-            <button onclick="bukaGroupSheet()" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-left flex justify-between items-center outline-none"><span id="group-display" class="text-sm font-medium text-gray-400 truncate">Pilih Group</span></button>
-            <input type="hidden" id="inp-group">
-          </div>
-          <div class="space-y-1">
-            <label class="text-[10px] font-bold text-gray-400 uppercase">Area *</label>
-            <select id="sel-area" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white outline-none">
-              <option value="" disabled selected>Pilih Area</option>
-              <option value="BANDUNG 1">BANDUNG 1</option>
-              <option value="BANDUNG 2">BANDUNG 2</option>
-              <option value="KARAWANG">KARAWANG</option>
-              <option value="DC CIANJUR">DC CIANJUR</option>
-              <option value="PLUMBON">PLUMBON</option>
-            </select>
-          </div>
+    <!-- HEADER -->
+    <div class="bg-white px-5 py-4 flex items-center justify-between shadow-sm sticky top-0 z-30">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-green-500/30">
+                <i class="fa-solid fa-box text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-800 text-lg leading-tight">Outbound<span class="text-green-500">Pro</span></h1>
+                <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Cold Storage</p>
+            </div>
         </div>
-        <div class="space-y-1">
-          <label class="text-[10px] font-bold text-gray-400 uppercase">Nomor Polisi *</label>
-          <input type="text" id="inp-nopol" placeholder="Cth: D 1234 ABC" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white uppercase outline-none">
+        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+            <i class="fa-solid fa-circle-half-stroke"></i>
         </div>
-      </div>
-
-      <!-- Card Muatan -->
-      <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3">
-        <div class="flex justify-between items-center mb-1"><h3 class="text-[10px] font-bold text-gray-400 uppercase">📦 Jumlah Kontener</h3><span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-xs font-bold px-3 py-1 rounded-lg font-mono">TOTAL: <span id="v-total">0</span></span></div>
-        <div class="space-y-2">
-          <div class="flex items-center justify-between bg-surface dark:bg-gray-800/50 p-3 rounded-2xl"><span class="text-sm font-bold dark:text-gray-200">❄️ Chiller</span><div class="flex items-center bg-white dark:bg-darkCard rounded-xl p-1 shadow-sm"><button onclick="ubahQty('c', -1)" class="w-9 h-9 font-bold dark:text-white active:bg-gray-100 dark:active:bg-gray-700 rounded-lg outline-none">−</button><input type="number" id="v-c" value="0" min="0" class="w-10 text-center font-mono font-bold bg-transparent dark:text-white outline-none" oninput="hitungTotal()"><button onclick="ubahQty('c', 1)" class="w-9 h-9 bg-blue-500 text-white rounded-lg font-bold outline-none">+</button></div></div>
-          <div class="flex items-center justify-between bg-surface dark:bg-gray-800/50 p-3 rounded-2xl"><span class="text-sm font-bold dark:text-gray-200">🧊 Freezer</span><div class="flex items-center bg-white dark:bg-darkCard rounded-xl p-1 shadow-sm"><button onclick="ubahQty('f', -1)" class="w-9 h-9 font-bold dark:text-white active:bg-gray-100 dark:active:bg-gray-700 rounded-lg outline-none">−</button><input type="number" id="v-f" value="0" min="0" class="w-10 text-center font-mono font-bold bg-transparent dark:text-white outline-none" oninput="hitungTotal()"><button onclick="ubahQty('f', 1)" class="w-9 h-9 bg-cyan-500 text-white rounded-lg font-bold outline-none">+</button></div></div>
-          <div class="flex items-center justify-between bg-surface dark:bg-gray-800/50 p-3 rounded-2xl"><span class="text-sm font-bold dark:text-gray-200">🍫 Coklat</span><div class="flex items-center bg-white dark:bg-darkCard rounded-xl p-1 shadow-sm"><button onclick="ubahQty('k', -1)" class="w-9 h-9 font-bold dark:text-white active:bg-gray-100 dark:active:bg-gray-700 rounded-lg outline-none">−</button><input type="number" id="v-k" value="0" min="0" class="w-10 text-center font-mono font-bold bg-transparent dark:text-white outline-none" oninput="hitungTotal()"><button onclick="ubahQty('k', 1)" class="w-9 h-9 bg-amber-500 text-white rounded-lg font-bold outline-none">+</button></div></div>
-        </div>
-      </div>
-
-      <!-- Card Personil & Ket -->
-      <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-          <input type="text" id="inp-qc" placeholder="Nama QC" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm dark:text-white outline-none">
-          <input type="text" id="inp-loader" placeholder="Nama Loader" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm dark:text-white outline-none">
-        </div>
-        <div class="space-y-1"><label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Keterangan Tambahan</label><textarea id="inp-ket" rows="2" placeholder="Catatan khusus (opsional)..." class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary"></textarea></div>
-        <div id="photo-zone" onclick="document.getElementById('file-inp').click()" class="border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 rounded-2xl p-6 text-center cursor-pointer relative overflow-hidden transition-all hover:bg-gray-100">
-          <div id="photo-content"><span class="text-2xl block mb-1">📸</span><p class="text-[10px] font-bold text-gray-400 uppercase">Ambil Foto Muatan</p></div>
-          <img id="photo-prev" class="absolute inset-0 w-full h-full object-cover hidden">
-        </div>
-        <input type="file" id="file-inp" accept="image/*" capture="environment" class="hidden" onchange="previewFoto(event)">
-      </div>
-
-      <button id="sub-btn" onclick="reviewDataSebelumSimpan()" class="w-full bg-primary active:scale-95 text-white rounded-2xl py-4 font-bold shadow-lg shadow-green-100 dark:shadow-none transition-all flex items-center justify-center gap-3 outline-none"><span id="btn-loader" class="spinner hidden"></span><span id="btn-text">SIMPAN DATA</span></button>
-      <button id="cancel-edit" onclick="resetForm()" class="w-full text-gray-400 text-[10px] font-bold hidden tracking-widest uppercase pb-4 outline-none">Batal</button>
-    </main>
-
-    <!-- TAB 2: RIWAYAT -->
-    <main id="tab-riwayat" class="hidden p-5">
-      <div class="flex justify-between items-end mb-4"><div><h2 class="text-xl font-bold dark:text-white">Riwayat</h2><input type="date" id="filter-tanggal" class="mt-1 bg-transparent text-[10px] font-bold text-primary outline-none" onchange="tarikDataServer()"></div><button onclick="window.print()" class="bg-white dark:bg-darkCard shadow-sm p-2 px-3 rounded-xl text-[10px] font-bold dark:text-white border border-gray-100 dark:border-gray-800 uppercase outline-none">📄 Cetak</button></div>
-      <input type="text" id="hist-search" placeholder="Cari Nopol/Group..." class="w-full bg-white dark:bg-darkCard border border-gray-100 dark:border-gray-800 rounded-xl py-3 px-4 text-sm dark:text-white outline-none shadow-sm mb-4" oninput="cariRiwayat()">
-      <div id="hist-list" class="space-y-3 pb-5"></div>
-    </main>
-
-    <!-- TAB 3: SUMMARY -->
-    <main id="tab-summary" class="hidden p-5 space-y-4">
-      <h2 class="text-xl font-bold dark:text-white">Rekap Hari Ini</h2>
-      <div class="grid grid-cols-1 gap-4 pb-5">
-        <div class="bg-white dark:bg-darkCard p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3"><div class="flex justify-between items-center"><div class="flex items-center gap-3"><span>❄️</span><p class="text-[10px] font-bold text-gray-400 uppercase">Chiller</p></div><p class="text-xl font-mono font-bold dark:text-white" id="sum-c">0</p></div><div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden"><div id="bar-c" class="progress-bar h-full bg-blue-500 w-0"></div></div></div>
-        <div class="bg-white dark:bg-darkCard p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3"><div class="flex justify-between items-center"><div class="flex items-center gap-3"><span>🧊</span><p class="text-[10px] font-bold text-gray-400 uppercase">Freezer</p></div><p class="text-xl font-mono font-bold dark:text-white" id="sum-f">0</p></div><div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden"><div id="bar-f" class="progress-bar h-full bg-cyan-500 w-0"></div></div></div>
-        <div class="bg-white dark:bg-darkCard p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3"><div class="flex justify-between items-center"><div class="flex items-center gap-3"><span>🍫</span><p class="text-[10px] font-bold text-gray-400 uppercase">Coklat</p></div><p class="text-xl font-mono font-bold dark:text-white" id="sum-k">0</p></div><div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden"><div id="bar-k" class="progress-bar h-full bg-amber-500 w-0"></div></div></div>
-        <div class="bg-gradient-to-br from-primary to-green-600 p-6 rounded-[40px] text-white shadow-xl flex items-center justify-between relative overflow-hidden"><div class="z-10"><p class="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">Akumulasi Muatan</p><p class="text-5xl font-mono font-bold" id="sum-total">0</p><p class="text-[10px] font-bold mt-2 bg-white/20 inline-block px-2 py-1 rounded uppercase">Dus Terkirim</p></div><span class="text-8xl opacity-20 absolute -right-5 -bottom-5">📦</span></div>
-      </div>
-    </main>
-  </div>
-
-  <!-- NAVIGASI -->
-  <nav>
-    <button onclick="gantiTab('input')" id="nav-input" class="text-primary active outline-none"><span class="text-2xl">📝</span><span class="text-[10px] font-bold">Input</span></button>
-    <button onclick="gantiTab('riwayat')" id="nav-riwayat" class="text-gray-300 outline-none"><span class="text-2xl">🕒</span><span class="text-[10px] font-bold">Riwayat</span></button>
-    <button onclick="gantiTab('summary')" id="nav-summary" class="text-gray-300 outline-none"><span class="text-2xl">📊</span><span class="text-[10px] font-bold">Summary</span></button>
-  </nav>
-
-  <!-- MODALS -->
-  <div id="confirm-overlay" onclick="tutupReview()" class="absolute inset-0 hidden opacity-0 z-[90] bg-black/40 transition-opacity"></div>
-  <div id="confirm-modal" class="modal-panel bg-white dark:bg-darkCard rounded-t-[40px] p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
-    <div class="w-14 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6"></div>
-    <h3 class="text-xl font-bold dark:text-white mb-4">Cek Ulang Data</h3>
-    <div class="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 space-y-3 text-sm mb-6">
-      <div class="flex justify-between"><span class="text-gray-400">Grup / Nopol:</span><span id="rev-nopol" class="font-bold dark:text-white text-right">-</span></div>
-      <div class="flex justify-between"><span class="text-gray-400">Total Muatan:</span><span id="rev-total" class="font-bold text-primary font-mono">-</span></div>
-      <div class="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-2"><span class="text-gray-400">Area:</span><span id="rev-area" class="dark:text-white text-right">-</span></div>
-      <div class="flex justify-between"><span class="text-gray-400">Checker:</span><span id="rev-qc" class="dark:text-white text-right">-</span></div>
-      <div class="flex flex-col gap-1 border-t border-gray-200 dark:border-gray-700 pt-2"><span class="text-gray-400 italic text-[11px]">Keterangan:</span><span id="rev-ket" class="dark:text-gray-100 font-medium">-</span></div>
     </div>
-    <div class="flex gap-3"><button onclick="tutupReview()" class="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 py-4 rounded-2xl font-bold outline-none">UBAH</button><button onclick="simpanDataFinal()" class="flex-2 w-full bg-primary text-white py-4 px-4 rounded-2xl font-bold shadow-lg shadow-green-100 outline-none">KIRIM SEKARANG</button></div>
-  </div>
 
-  <div id="group-sheet-overlay" onclick="tutupGroupSheet()" class="absolute inset-0 hidden opacity-0 z-[90] bg-black/40 transition-opacity"></div>
-  <div id="group-sheet" class="modal-panel h-[75%] bg-white dark:bg-darkCard rounded-t-[40px] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
-    <div onclick="tutupGroupSheet()" class="w-full flex justify-center pt-4 pb-2 cursor-pointer"><div class="w-14 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div></div>
-    <div class="px-6 pb-4 border-b border-gray-100 dark:border-gray-800"><h3 class="text-lg font-bold dark:text-white mb-3 text-center">Pilih Group</h3><input type="text" id="sheet-search" oninput="filterListGroup()" placeholder="Cari kode..." class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary"></div>
-    <div class="flex-1 overflow-y-auto p-3 pb-8" id="sheet-list"></div>
-  </div>
+    <!-- MAIN FORM -->
+    <div class="p-5 pb-24">
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="text-xl font-bold text-slate-800">Catatan Pemuatan</h2>
+            <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1">
+                <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> LIVE
+            </div>
+        </div>
 
-  <div id="image-modal" onclick="tutupViewerFoto()" class="absolute inset-0 bg-black/95 z-[250] hidden opacity-0 transition-opacity flex flex-col justify-center items-center p-4"><img id="viewer-img" src="" class="w-full max-h-[70vh] object-contain rounded-3xl mb-5"><div id="viewer-caption" class="text-white text-xs font-mono bg-white/10 px-6 py-2 rounded-full border border-white/20 uppercase tracking-widest text-center"></div></div>
-  <div id="toast" class="toast bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3"><span id="toast-icon" class="text-lg">✅</span><span id="toast-msg" class="text-[11px] font-bold uppercase tracking-widest">BERHASIL</span></div>
+        <form id="outboundForm" class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+            
+            <!-- INPUT TANGGAL (BARU) -->
+            <div class="mb-5">
+                <label class="block text-[10px] font-bold text-slate-400 mb-1 tracking-wider">TANGGAL PEMUATAN *</label>
+                <input type="date" id="tanggal" class="w-full bg-slate-100/50 text-slate-700 text-sm rounded-xl px-4 py-3 border border-slate-200 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all font-medium" required>
+            </div>
 
-</div> 
-<audio id="success-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" preload="auto"></audio>
+            <!-- ROW: GROUP & AREA -->
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1 tracking-wider">GROUP *</label>
+                    <input type="text" id="group-input" readonly placeholder="Pilih Group" class="w-full bg-slate-100/50 text-slate-700 text-sm rounded-xl px-4 py-3 border border-slate-200 focus:outline-none font-medium" onclick="openGroupSheet()" required>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1 tracking-wider">AREA *</label>
+                    <select id="area" class="w-full bg-slate-100/50 text-slate-700 text-sm rounded-xl px-4 py-3 border border-slate-200 focus:outline-none font-medium appearance-none" required>
+                        <option value="" disabled selected>Pilih Area</option>
+                        <option value="AA">Area AA</option>
+                        <option value="BB">Area BB</option>
+                        <option value="CC">Area CC</option>
+                        <option value="DD">Area DD</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- NOPOL -->
+            <div class="mb-6">
+                <label class="block text-[10px] font-bold text-slate-400 mb-1 tracking-wider">NOMOR POLISI *</label>
+                <input type="text" id="nopol" placeholder="CTH: D 1234 ABC" class="w-full bg-slate-100/50 text-slate-700 text-sm rounded-xl px-4 py-3 border border-slate-200 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 font-bold uppercase transition-all" required>
+            </div>
+
+            <!-- COUNTER BOX -->
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-6 relative">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-[11px] font-bold text-slate-500 flex items-center gap-1"><i class="fa-solid fa-box text-orange-400"></i> JUMLAH DUS</span>
+                    <span class="text-[11px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">TOTAL : <span id="total-text">0</span></span>
+                </div>
+
+                <!-- Chiller -->
+                <div class="flex items-center justify-between mb-3 bg-white p-2 rounded-xl shadow-sm border border-slate-50">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-snowflake text-blue-300 w-5 text-center"></i>
+                        <span class="font-bold text-slate-700 text-sm">Chiller</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="counter-btn btn-minus" onclick="updateCount('chiller', -1)"><i class="fa-solid fa-minus"></i></button>
+                        <span id="val-chiller" class="font-bold text-slate-800 w-6 text-center text-lg">0</span>
+                        <button type="button" class="counter-btn btn-plus chiller" onclick="updateCount('chiller', 1)"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <!-- Freezer -->
+                <div class="flex items-center justify-between mb-3 bg-white p-2 rounded-xl shadow-sm border border-slate-50">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-cube text-cyan-400 w-5 text-center"></i>
+                        <span class="font-bold text-slate-700 text-sm">Freezer</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="counter-btn btn-minus" onclick="updateCount('freezer', -1)"><i class="fa-solid fa-minus"></i></button>
+                        <span id="val-freezer" class="font-bold text-slate-800 w-6 text-center text-lg">0</span>
+                        <button type="button" class="counter-btn btn-plus freezer" onclick="updateCount('freezer', 1)"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <!-- Coklat -->
+                <div class="flex items-center justify-between bg-white p-2 rounded-xl shadow-sm border border-slate-50">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-cookie text-amber-600 w-5 text-center"></i>
+                        <span class="font-bold text-slate-700 text-sm">Coklat</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="counter-btn btn-minus" onclick="updateCount('coklat', -1)"><i class="fa-solid fa-minus"></i></button>
+                        <span id="val-coklat" class="font-bold text-slate-800 w-6 text-center text-lg">0</span>
+                        <button type="button" class="counter-btn btn-plus coklat" onclick="updateCount('coklat', 1)"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW: QC & LOADER -->
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <input type="text" id="qc" placeholder="Nama QC" class="w-full bg-slate-50 text-slate-700 text-sm rounded-xl px-4 py-3 border border-slate-100 focus:outline-none focus:border-green-500 font-medium">
+                <input type="text" id="loader" placeholder="Nama Loader" class="w-full bg-slate-50 text-slate-700 text-sm rounded-xl px-4 py-3 border border-slate-100 focus:outline-none focus:border-green-500 font-medium">
+            </div>
+
+            <!-- CATATAN -->
+            <div class="mb-5">
+                <label class="block text-[10px] font-bold text-slate-400 mb-1 tracking-wider uppercase">Keterangan Tambahan</label>
+                <textarea id="catatan" rows="2" placeholder="Catatan khusus (opsional)..." class="w-full bg-slate-50 text-slate-700 text-sm rounded-xl px-4 py-3 border border-slate-100 focus:outline-none focus:border-green-500 font-medium resize-none"></textarea>
+            </div>
+
+            <!-- UPLOAD FOTO -->
+            <div class="mb-6">
+                <input type="file" id="photo" accept="image/*" capture="environment" class="hidden" onchange="previewPhoto(event)">
+                <label for="photo" id="photo-label" class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer relative overflow-hidden">
+                    <i class="fa-solid fa-camera text-2xl text-slate-400 mb-1"></i>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ambil Foto Muatan</span>
+                    <img id="photo-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                </label>
+            </div>
+
+            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-600/30 transition-all text-sm tracking-wide">
+                SIMPAN DATA
+            </button>
+        </form>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <a href="#" class="nav-item active"><img src="https://img.icons8.com/color/48/000000/edit-property.png" class="w-6 h-6 mb-1">Input</a>
+        <a href="#" class="nav-item"><img src="https://img.icons8.com/color/48/000000/clock--v1.png" class="w-6 h-6 mb-1">Riwayat</a>
+        <a href="#" class="nav-item"><img src="https://img.icons8.com/color/48/000000/bar-chart.png" class="w-6 h-6 mb-1">Summary</a>
+    </div>
+
+    <!-- LOADER -->
+    <div class="loader-overlay" id="loader-view">
+        <div class="spinner mb-3"></div>
+        <div class="text-sm font-bold text-slate-700">Menyimpan Data...</div>
+        <div class="text-[10px] text-slate-400">Mohon tunggu sebentar</div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast" id="toastMsg">
+        <i class="fa-solid fa-check-square text-green-400 text-lg"></i>
+        <span>DATA BERHASIL DISIMPAN</span>
+    </div>
+
+    <!-- OVERLAY UTK MODAL -->
+    <div class="overlay" id="main-overlay" onclick="closeGroupSheet()"></div>
+
+    <!-- BOTTOM SHEET GROUP -->
+    <div class="bottom-sheet" id="group-sheet">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
+        <h3 class="text-center font-bold text-slate-800 text-lg mb-4">Pilih Group</h3>
+        
+        <input type="text" id="sheet-search" placeholder="Cari kode group..." class="w-full bg-slate-100 text-slate-700 text-sm rounded-xl px-4 py-3 focus:outline-none mb-2 font-medium" onkeyup="filterGroup()">
+        
+        <div class="list-group" id="group-list">
+            <div class="text-[10px] font-bold text-slate-400 tracking-wider mb-2 mt-2">GRUP BDG</div>
+            <div class="group-item" onclick="selectGroup('BDG01')">BDG01 <i class="fa-solid fa-play"></i></div>
+            <div class="group-item" onclick="selectGroup('BDG02')">BDG02 <i class="fa-solid fa-play"></i></div>
+            <div class="group-item" onclick="selectGroup('BDG03')">BDG03 <i class="fa-solid fa-play"></i></div>
+            <div class="text-[10px] font-bold text-slate-400 tracking-wider mb-2 mt-4">GRUP JKT</div>
+            <div class="group-item" onclick="selectGroup('JKT01')">JKT01 <i class="fa-solid fa-play"></i></div>
+            <div class="group-item" onclick="selectGroup('JKT02')">JKT02 <i class="fa-solid fa-play"></i></div>
+        </div>
+    </div>
+
+</div>
 
 <script>
-  // ==========================================
-  // GANTI URL DI BAWAH DENGAN URL GOOGLE APPS SCRIPT ANDA YANG BARU (BERAKHIRAN /exec)
-  const API_URL = "https://script.google.com/macros/s/AKfycbyxW-vErShZJgi05YYGsfUm7pWqQYVu4atyun0doCDohNL7l0Qye3-JatTe6uiNf2b4dQ/exec";
-  // ==========================================
+    // MASUKKAN LINK GOOGLE APPS SCRIPT ANDA DI SINI
+    const API_URL = "TARUH_URL_GOOGLE_SCRIPT_ANDA_DISINI";
 
-  var GD = { BDG:['BDG01','BDG02','BDG03','BDG04','BDG05','BDG06','BDG07','BDG08','BDG09','BDG10','BDG11','BDG12','BDG13','BDG14','BDG15','BDG16','BDG17','BDG18','BDG19','BDG20','BDG21','BDG22','BDG23','BDG24','BDG25','BDG26','BDG27','BDG28','BDG29','BDG30','BDG31','BDG32','BDG33','BDG34','BDG35'], BDY:['BDY01','BDY02','BDY03','BDY04','BDY05','BDY06','BDY07','BDY08','BDY09','BDY10','BDY11','BDY12','BDY13','BDY14','BDY15','BDY16','BDY17','BDY18','BDY19','BDY20','BDY21'], CJR:['CJR01','CJR02','CJR03','CJR04','CJR05','CJR06','CJR07','CJR08','CJR09','CJR10','CJR11','CJR12','CJR13','CJR14','CJR15','CJR16','CJR17','CJR18','CJR19','CJR20','CJR21','CJR22','CJR23','CJR24','CJR25','CJR26','CJR27'], KWG:['KWG01','KWG02','KWG03','KWG04','KWG05','KWG06','KWG07','KWG08','KWG09','KWG10','KWG11','KWG12','KWG13','KWG14','KWG15','KWG16','KWG17','KWG18','KWG19','KWG20','KWG21','KWG22','KWG23','KWG24','KWG25','KWG26','KWG27','KWG28','KWG29','KWG30','KWG31','KWG32'], PBN:['PBN01','PBN02','PBN03','PBN04','PBN05','PBN06','PBN07','PBN08','PBN09','PBN10','PBN11','PBN12','PBN13','PBN14','PBN15','PBN16','PBN17','PBN18','PBN19','PBN20','PBN21','PBN22','PBN23','PBN24'] };
-  var allGroups = []; Object.keys(GD).forEach(l => GD[l].forEach(c => allGroups.push({code:c, letter:l})));
-  var riwayatData = [], toastTimer;
+    let counts = { chiller: 0, freezer: 0, coklat: 0 };
+    let photoBase64 = "";
 
-  function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); document.getElementById('dark-icon').textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌓'; }
-  function saveUserPrefs() { localStorage.setItem('lastQC', document.getElementById('inp-qc').value); localStorage.setItem('lastLoader', document.getElementById('inp-loader').value); localStorage.setItem('lastArea', document.getElementById('sel-area').value); }
-  function loadUserPrefs() { document.getElementById('inp-qc').value = localStorage.getItem('lastQC') || ''; document.getElementById('inp-loader').value = localStorage.getItem('lastLoader') || ''; if (localStorage.getItem('lastArea')) document.getElementById('sel-area').value = localStorage.getItem('lastArea'); }
-
-  function gantiTab(tab) {
-    ['input','riwayat','summary'].forEach(t => { document.getElementById('tab-'+t).classList.add('hidden'); document.getElementById('nav-'+t).classList.replace('text-primary','text-gray-300'); document.getElementById('nav-'+t).classList.remove('active'); });
-    document.getElementById('tab-'+tab).classList.remove('hidden'); document.getElementById('nav-'+tab).classList.replace('text-gray-300','text-primary'); document.getElementById('nav-'+tab).classList.add('active');
-    if (tab === 'summary') hitungSummary(); if (tab === 'riwayat') tarikDataServer();
-  }
-
-  function bukaGroupSheet() { var o = document.getElementById('group-sheet-overlay'); o.classList.remove('hidden'); void o.offsetWidth; o.classList.add('opacity-100'); document.getElementById('group-sheet').classList.add('open'); filterListGroup(); }
-  function tutupGroupSheet() { document.getElementById('group-sheet').classList.remove('open'); document.getElementById('group-sheet-overlay').classList.remove('opacity-100'); setTimeout(() => document.getElementById('group-sheet-overlay').classList.add('hidden'), 300); }
-  function filterListGroup() {
-    var q = document.getElementById('sheet-search').value.trim().toUpperCase(), listEl = document.getElementById('sheet-list');
-    var matches = q ? allGroups.filter(g => g.code.includes(q) || g.letter.includes(q)) : allGroups;
-    var html = '', lastL = null;
-    matches.forEach(g => {
-      if (g.letter !== lastL) { html += `<div class="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 rounded-2xl mb-1 mt-2">Grup ${g.letter}</div>`; lastL = g.letter; }
-      html += `<div onclick="pilihGroup('${g.code}')" class="px-5 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between active:bg-green-50 rounded-2xl transition-all cursor-pointer"><span class="font-mono font-bold dark:text-white text-lg">${g.code}</span><span class="text-gray-300 text-xs">▶️</span></div>`;
+    // Set Default Tanggal ke Hari Ini saat halaman dimuat
+    document.addEventListener("DOMContentLoaded", function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('tanggal').value = today;
     });
-    listEl.innerHTML = html || '<p class="text-center py-8 text-gray-400 text-xs">Tidak ditemukan</p>';
-  }
-  function pilihGroup(code) { document.getElementById('inp-group').value = code; document.getElementById('group-display').textContent = code; document.getElementById('group-display').classList.add('text-gray-900','dark:text-white','font-bold'); tutupGroupSheet(); }
-  function ubahQty(t, d) { var i = document.getElementById('v-'+t); i.value = Math.max(0, (parseInt(i.value) || 0) + d); hitungTotal(); }
-  function hitungTotal() { var c = Math.max(0, parseInt(document.getElementById('v-c').value) || 0), f = Math.max(0, parseInt(document.getElementById('v-f').value) || 0), k = Math.max(0, parseInt(document.getElementById('v-k').value) || 0); document.getElementById('v-total').textContent = c + f + k; }
 
-  function reviewDataSebelumSimpan() {
-    var g = document.getElementById('inp-group').value, n = document.getElementById('inp-nopol').value.trim(), t = document.getElementById('v-total').textContent;
-    if (!g || !n || t == "0") return notifikasi('Data belum lengkap!', 'error');
-    document.getElementById('rev-nopol').textContent = g + ' / ' + n.toUpperCase(); document.getElementById('rev-total').textContent = t + ' Dus'; document.getElementById('rev-area').textContent = document.getElementById('sel-area').value; document.getElementById('rev-qc').textContent = document.getElementById('inp-qc').value || '-'; document.getElementById('rev-ket').textContent = document.getElementById('inp-ket').value || '-';
-    var o = document.getElementById('confirm-overlay'); o.classList.remove('hidden'); void o.offsetWidth; o.classList.add('opacity-100'); document.getElementById('confirm-modal').classList.add('open');
-  }
-  function tutupReview() { document.getElementById('confirm-modal').classList.remove('open'); document.getElementById('confirm-overlay').classList.remove('opacity-100'); setTimeout(() => document.getElementById('confirm-overlay').classList.add('hidden'), 300); }
+    function updateCount(type, val) {
+        let newVal = counts[type] + val;
+        if (newVal >= 0) {
+            counts[type] = newVal;
+            document.getElementById('val-' + type).innerText = newVal;
+            document.getElementById('total-text').innerText = counts.chiller + counts.freezer + counts.coklat;
+        }
+    }
 
-  // API CALLS - DENGAN KEAMANAN CORS DAN REDIRECT PENUH
-  function panggilGoogleAPI(payloadData) {
-    return fetch(API_URL, { 
-      redirect: "follow", // Wajib untuk mengikuti redirect Google
-      method: 'POST', 
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Wajib text/plain agar tidak diblokir CORS
-      body: JSON.stringify(payloadData) 
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Jaringan bermasalah atau diblokir Google.');
-      return res.text(); // Ambil sebagai text dulu untuk mencegah crash
-    })
-    .then(text => {
-      try {
-        return JSON.parse(text); // Baru diubah ke JSON
-      } catch(e) {
-        console.error("Respon aneh dari Google:", text);
-        throw new Error('Akses ditolak! Pastikan Deployment Google Script diatur ke "Siapa saja/Anyone"');
-      }
+    // Modal Group
+    function openGroupSheet() {
+        document.getElementById('main-overlay').classList.add('show');
+        document.getElementById('group-sheet').classList.add('show');
+        document.getElementById('sheet-search').value = "";
+        filterGroup();
+    }
+    function closeGroupSheet() {
+        document.getElementById('main-overlay').classList.remove('show');
+        document.getElementById('group-sheet').classList.remove('show');
+    }
+    function selectGroup(val) {
+        document.getElementById('group-input').value = val;
+        closeGroupSheet();
+    }
+    function filterGroup() {
+        let input = document.getElementById('sheet-search').value.toUpperCase();
+        let items = document.querySelectorAll('.group-item');
+        items.forEach(function(item) {
+            if (item.innerText.toUpperCase().indexOf(input) > -1) {
+                item.style.display = "flex";
+            } else {
+                item.style.display = "none";
+            }
+        });
+    }
+
+    // Foto
+    function previewPhoto(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('photo-preview');
+                img.src = e.target.result;
+                img.classList.remove('hidden');
+                photoBase64 = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Submit
+    document.getElementById('outboundForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const payload = {
+            tanggal: document.getElementById('tanggal').value,
+            group: document.getElementById('group-input').value,
+            area: document.getElementById('area').value,
+            nopol: document.getElementById('nopol').value,
+            chiller: counts.chiller,
+            freezer: counts.freezer,
+            coklat: counts.coklat,
+            totalMuatan: counts.chiller + counts.freezer + counts.coklat,
+            qc: document.getElementById('qc').value,
+            loader: document.getElementById('loader').value,
+            catatan: document.getElementById('catatan').value,
+            photoBase64: photoBase64
+        };
+
+        if (payload.totalMuatan === 0) {
+            showToast("Total muatan tidak boleh 0", true);
+            return;
+        }
+
+        document.getElementById('loader-view').style.display = 'flex';
+
+        fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(function() {
+            document.getElementById('loader-view').style.display = 'none';
+            showToast("DATA BERHASIL DISIMPAN", false);
+            
+            // Reset form
+            document.getElementById('outboundForm').reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggal').value = today; // Kembalikan ke tgl hari ini
+            counts = { chiller: 0, freezer: 0, coklat: 0 };
+            document.getElementById('val-chiller').innerText = 0;
+            document.getElementById('val-freezer').innerText = 0;
+            document.getElementById('val-coklat').innerText = 0;
+            document.getElementById('total-text').innerText = 0;
+            document.getElementById('photo-preview').classList.add('hidden');
+            document.getElementById('photo-preview').src = "";
+            photoBase64 = "";
+        })
+        .catch(function(error) {
+            document.getElementById('loader-view').style.display = 'none';
+            showToast("GAGAL UPLOAD DATA", true);
+            console.error('Error:', error);
+        });
     });
-  }
 
-  function simpanDataFinal() {
-    tutupReview();
-    if (API_URL === "TARUH_URL_GOOGLE_SCRIPT_ANDA_DISINI") { alert("Mohon ganti API_URL di kode HTML dengan URL Google Script Anda!"); return; }
-
-    var p = { 
-      rowIndex: document.getElementById('edit-index').value, group: document.getElementById('inp-group').value, area: document.getElementById('sel-area').value, 
-      nopol: document.getElementById('inp-nopol').value.trim(), qc: document.getElementById('inp-qc').value, loader: document.getElementById('inp-loader').value, 
-      keterangan: document.getElementById('inp-ket').value, chiller: parseInt(document.getElementById('v-c').value) || 0, freezer: parseInt(document.getElementById('v-f').value) || 0, 
-      coklat: parseInt(document.getElementById('v-k').value) || 0, total: parseInt(document.getElementById('v-total').textContent), 
-      photoLink: document.getElementById('photo-prev').src.startsWith('data') ? "" : document.getElementById('photo-prev').src 
-    };
-
-    var btn = document.getElementById('sub-btn'); btn.disabled = true; btn.classList.add('opacity-70');
-    document.getElementById('btn-loader').classList.remove('hidden'); document.getElementById('btn-text').textContent = 'MENYIMPAN...';
-    saveUserPrefs();
-
-    var fInp = document.getElementById('file-inp');
-    if (fInp.files.length > 0) {
-      compressImg(fInp.files[0], function(b64) {
-         panggilGoogleAPI({ action: 'uploadFoto', payload: { base64Data: b64, fileName: "FOTO_"+p.group+"_"+Date.now()+".jpg" } })
-         .then(fr => { p.photoLink = fr.url; eksekusiFinal(p); })
-         .catch(err => { 
-            notifikasi(err.message, 'error'); 
-            resetBtnUI(); 
-         });
-      });
-    } else { eksekusiFinal(p); }
-  }
-
-  function eksekusiFinal(p) {
-    panggilGoogleAPI({ action: 'simpanData', payload: p })
-    .then(res => {
-      if (res.status === 'ok') { document.getElementById('success-sound').play(); notifikasi(res.message); resetForm(); tarikDataServer(); } 
-      else { notifikasi(res.message, 'error'); }
-      resetBtnUI();
-    }).catch(err => { 
-      notifikasi(err.message, 'error'); 
-      resetBtnUI(); 
-    });
-  }
-
-  function tarikDataServer() {
-    if (API_URL === "TARUH_URL_GOOGLE_SCRIPT_ANDA_DISINI") return;
-    var ti = document.getElementById('filter-tanggal').value;
-    var target = ti ? ti.split('-').reverse().join('/') : '';
-    fetch(API_URL + "?action=getRiwayat&target=" + encodeURIComponent(target))
-      .then(res => res.json())
-      .then(res => { if (res.status === 'ok') { riwayatData = res.data; renderRiwayat(); } })
-      .catch(err => console.log('Error fetch riwayat:', err));
-  }
-
-  // --- SISA FUNGSI UI (Tidak Berubah) ---
-  function resetBtnUI() { var btn = document.getElementById('sub-btn'); btn.disabled = false; btn.classList.remove('opacity-70'); document.getElementById('btn-loader').classList.add('hidden'); document.getElementById('btn-text').textContent = 'SIMPAN DATA'; }
-  function compressImg(f, cb) { var r = new FileReader(); r.readAsDataURL(f); r.onload = function(e) { var i = new Image(); i.src = e.target.result; i.onload = function() { var cv = document.createElement('canvas'); var m = 800, w = i.width, h = i.height; if (w > m) { h = Math.round((h * m) / w); w = m; } cv.width = w; cv.height = h; var cx = cv.getContext('2d'); cx.drawImage(i, 0, 0, w, h); cb(cv.toDataURL('image/jpeg', 0.7).split(',')[1]); } } }
-  function salinRekap(idx) { var h = riwayatData.find(d => d.rowIndex == idx); if(!h)return; var txt = `*REKAP OUTBOUNDPRO*\nNopol: ${h.nopol}\nGrup: ${h.group}\nTotal: ${h.total} Dus\nQC: ${h.qc}\nKeterangan: ${h.keterangan || '-'}`; var el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notifikasi('Rekap disalin!'); }
-  function renderRiwayat() { var el = document.getElementById('hist-list'), q = document.getElementById('hist-search').value.toLowerCase(); var filtered = riwayatData.filter(h => h.nopol.toLowerCase().includes(q) || h.group.toLowerCase().includes(q)); if (!filtered.length) { el.innerHTML = '<div class="py-12 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">Data Kosong</div>'; return; } el.innerHTML = filtered.map(h => { var waMsg = `*LAPORAN OUTBOUNDPRO*\nNopol: ${h.nopol}\nGroup: ${h.group}\nTotal: ${h.total} Dus\nQC: ${h.qc}\nKet: ${h.keterangan || '-'}`; return `<div class="bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-800"><div class="flex justify-between items-start mb-3"><div class="flex gap-3"><div class="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center font-bold text-primary text-xs shadow-inner font-mono">${h.group}</div><div><h4 class="text-sm font-bold dark:text-white">${h.nopol}</h4><p class="text-[9px] text-gray-400 font-bold uppercase">${h.area} • ${h.timestamp.split(' ')[1]}</p></div></div><div class="bg-green-50 dark:bg-green-900/30 text-primary px-3 py-1 rounded-lg text-sm font-bold font-mono border border-green-100 dark:border-green-800">${h.total}</div></div>${h.keterangan ? `<div class="bg-gray-50 dark:bg-gray-900/50 p-2 rounded-xl mb-3 text-[11px] text-gray-500 dark:text-gray-400 italic border-l-4 border-gray-200">"${h.keterangan}"</div>` : ''}<div class="flex justify-between items-center border-t border-gray-50 dark:border-gray-800 pt-3 no-print"><div class="flex gap-2"><button onclick="editData('${h.rowIndex}')" class="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl uppercase outline-none">Edit</button><button onclick="salinRekap('${h.rowIndex}')" class="text-[10px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl uppercase outline-none">Salin</button></div><a href="https://wa.me/?text=${encodeURIComponent(waMsg)}" target="_blank" class="text-[10px] font-bold text-wa bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-xl border border-green-100 outline-none">🟢 Share</a></div></div>`; }).join(''); }
-  function editData(idx) { var d = riwayatData.find(h => h.rowIndex == idx); if (!d) return; document.getElementById('edit-index').value = idx; document.getElementById('form-title').textContent = "Update Data"; document.getElementById('cancel-edit').classList.remove('hidden'); pilihGroup(d.group); document.getElementById('sel-area').value = d.area; document.getElementById('inp-nopol').value = d.nopol; document.getElementById('v-c').value = d.chiller; document.getElementById('v-f').value = d.freezer; document.getElementById('v-k').value = d.coklat; document.getElementById('inp-qc').value = d.qc; document.getElementById('inp-loader').value = d.loader; document.getElementById('inp-ket').value = d.keterangan || ''; hitungTotal(); gantiTab('input'); }
-  function hitungSummary() { var c=0, f=0, k=0; riwayatData.forEach(h => { c += h.chiller; f += h.freezer; k += h.coklat; }); var t = c+f+k; document.getElementById('sum-c').textContent = c; document.getElementById('sum-f').textContent = f; document.getElementById('sum-k').textContent = k; document.getElementById('sum-total').textContent = t; if (t > 0) { document.getElementById('bar-c').style.width = (c/t*100)+'%'; document.getElementById('bar-f').style.width = (f/t*100)+'%'; document.getElementById('bar-k').style.width = (k/t*100)+'%'; } }
-  function resetForm() { document.getElementById('edit-index').value = ""; document.getElementById('form-title').textContent = "Catat Pemuatan"; document.getElementById('cancel-edit').classList.add('hidden'); document.getElementById('inp-group').value = ''; document.getElementById('group-display').textContent = 'Pilih Group'; document.getElementById('group-display').classList.remove('text-gray-900', 'dark:text-white', 'font-bold'); document.getElementById('inp-nopol').value = ''; ['c','f','k'].forEach(t => document.getElementById('v-'+t).value = 0); document.getElementById('inp-ket').value = ''; hitungTotal(); document.getElementById('photo-prev').classList.add('hidden'); document.getElementById('photo-prev').src = ""; document.getElementById('photo-content').classList.remove('hidden'); document.getElementById('file-inp').value = ''; loadUserPrefs(); }
-  function notifikasi(m, t) { var el = document.getElementById('toast'); document.getElementById('toast-msg').textContent = m.toUpperCase(); document.getElementById('toast-icon').textContent = t === 'error' ? '⚠️' : '✅'; el.classList.add('show'); if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3000); }
-  function bukaViewerFoto(u, g, n) { var m = document.getElementById('image-modal'), d = u, mt = u.match(/\/d\/([a-zA-Z0-9-_]+)/); if (mt) d = 'https://drive.google.com/thumbnail?id=' + mt[1] + '&sz=w800'; document.getElementById('viewer-img').src = d; document.getElementById('viewer-caption').textContent = g + ' - ' + n; m.classList.remove('hidden'); void m.offsetWidth; m.classList.add('opacity-100'); }
-  function tutupViewerFoto() { var m = document.getElementById('image-modal'); m.classList.remove('opacity-100'); setTimeout(() => m.classList.add('hidden'), 300); }
-  function previewFoto(e) { var f = e.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = ev => { document.getElementById('photo-prev').src = ev.target.result; document.getElementById('photo-prev').classList.remove('hidden'); document.getElementById('photo-content').classList.add('hidden'); }; r.readAsDataURL(f); }
-
-  window.onload = function() { if (localStorage.getItem('theme') === 'dark') toggleDarkMode(); loadUserPrefs(); tarikDataServer(); };
+    function showToast(text, isError) {
+        var toast = document.getElementById('toastMsg');
+        toast.innerHTML = isError 
+            ? '<i class="fa-solid fa-triangle-exclamation text-yellow-400 text-lg"></i> <span>' + text + '</span>'
+            : '<i class="fa-solid fa-check-square text-green-400 text-lg"></i> <span>' + text + '</span>';
+        
+        if(isError) {
+            toast.classList.add('toast-error');
+        } else {
+            toast.classList.remove('toast-error');
+        }
+        
+        toast.classList.add('show');
+        setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    }
 </script>
+
 </body>
 </html>
