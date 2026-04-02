@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>OutboundPro Pro</title>
-a
+
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,7 +60,7 @@ a
     <main id="tab-input" class="p-5 space-y-4">
       <div class="flex justify-between items-center">
         <h2 id="form-title" class="text-xl font-bold text-gray-800 dark:text-gray-100">Catat Pemuatan</h2>
-        <div class="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded text-[10px] font-bold text-primary flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> API READY</div>
+        <div class="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded text-[10px] font-bold text-primary flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> VERCEL READY</div>
       </div>
       <input type="hidden" id="edit-index" value="">
 
@@ -175,7 +175,7 @@ a
 <script>
   // ==========================================
   // GANTI URL DI BAWAH DENGAN URL GOOGLE APPS SCRIPT ANDA YANG BARU (BERAKHIRAN /exec)
-  const API_URL = "https://script.google.com/macros/s/AKfycbyxW-vErShZJgi05YYGsfUm7pWqQYVu4atyun0doCDohNL7l0Qye3-JatTe6uiNf2b4dQ/exec";
+  const API_URL = "TARUH_URL_GOOGLE_SCRIPT_ANDA_DISINI";
   // ==========================================
 
   var GD = { BDG:['BDG01','BDG02','BDG03','BDG04','BDG05','BDG06','BDG07','BDG08','BDG09','BDG10','BDG11','BDG12','BDG13','BDG14','BDG15','BDG16','BDG17','BDG18','BDG19','BDG20','BDG21','BDG22','BDG23','BDG24','BDG25','BDG26','BDG27','BDG28','BDG29','BDG30','BDG31','BDG32','BDG33','BDG34','BDG35'], BDY:['BDY01','BDY02','BDY03','BDY04','BDY05','BDY06','BDY07','BDY08','BDY09','BDY10','BDY11','BDY12','BDY13','BDY14','BDY15','BDY16','BDY17','BDY18','BDY19','BDY20','BDY21'], CJR:['CJR01','CJR02','CJR03','CJR04','CJR05','CJR06','CJR07','CJR08','CJR09','CJR10','CJR11','CJR12','CJR13','CJR14','CJR15','CJR16','CJR17','CJR18','CJR19','CJR20','CJR21','CJR22','CJR23','CJR24','CJR25','CJR26','CJR27'], KWG:['KWG01','KWG02','KWG03','KWG04','KWG05','KWG06','KWG07','KWG08','KWG09','KWG10','KWG11','KWG12','KWG13','KWG14','KWG15','KWG16','KWG17','KWG18','KWG19','KWG20','KWG21','KWG22','KWG23','KWG24','KWG25','KWG26','KWG27','KWG28','KWG29','KWG30','KWG31','KWG32'], PBN:['PBN01','PBN02','PBN03','PBN04','PBN05','PBN06','PBN07','PBN08','PBN09','PBN10','PBN11','PBN12','PBN13','PBN14','PBN15','PBN16','PBN17','PBN18','PBN19','PBN20','PBN21','PBN22','PBN23','PBN24'] };
@@ -216,7 +216,28 @@ a
   }
   function tutupReview() { document.getElementById('confirm-modal').classList.remove('open'); document.getElementById('confirm-overlay').classList.remove('opacity-100'); setTimeout(() => document.getElementById('confirm-overlay').classList.add('hidden'), 300); }
 
-  // API CALLS MENGGUNAKAN FETCH DENGAN FIX CORS (text/plain)
+  // API CALLS - DENGAN KEAMANAN CORS DAN REDIRECT PENUH
+  function panggilGoogleAPI(payloadData) {
+    return fetch(API_URL, { 
+      redirect: "follow", // Wajib untuk mengikuti redirect Google
+      method: 'POST', 
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Wajib text/plain agar tidak diblokir CORS
+      body: JSON.stringify(payloadData) 
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Jaringan bermasalah atau diblokir Google.');
+      return res.text(); // Ambil sebagai text dulu untuk mencegah crash
+    })
+    .then(text => {
+      try {
+        return JSON.parse(text); // Baru diubah ke JSON
+      } catch(e) {
+        console.error("Respon aneh dari Google:", text);
+        throw new Error('Akses ditolak! Pastikan Deployment Google Script diatur ke "Siapa saja/Anyone"');
+      }
+    });
+  }
+
   function simpanDataFinal() {
     tutupReview();
     if (API_URL === "TARUH_URL_GOOGLE_SCRIPT_ANDA_DISINI") { alert("Mohon ganti API_URL di kode HTML dengan URL Google Script Anda!"); return; }
@@ -236,30 +257,26 @@ a
     var fInp = document.getElementById('file-inp');
     if (fInp.files.length > 0) {
       compressImg(fInp.files[0], function(b64) {
-         fetch(API_URL, { 
-           method: 'POST', 
-           headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // FIX CORS DISINI
-           body: JSON.stringify({ action: 'uploadFoto', payload: { base64Data: b64, fileName: "FOTO_"+p.group+"_"+Date.now()+".jpg" } }) 
-         })
-         .then(res => res.json())
+         panggilGoogleAPI({ action: 'uploadFoto', payload: { base64Data: b64, fileName: "FOTO_"+p.group+"_"+Date.now()+".jpg" } })
          .then(fr => { p.photoLink = fr.url; eksekusiFinal(p); })
-         .catch(err => { notifikasi('Gagal upload foto', 'error'); resetBtnUI(); console.error(err); });
+         .catch(err => { 
+            notifikasi(err.message, 'error'); 
+            resetBtnUI(); 
+         });
       });
     } else { eksekusiFinal(p); }
   }
 
   function eksekusiFinal(p) {
-    fetch(API_URL, { 
-      method: 'POST', 
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // FIX CORS DISINI
-      body: JSON.stringify({ action: 'simpanData', payload: p }) 
-    })
-    .then(res => res.json())
+    panggilGoogleAPI({ action: 'simpanData', payload: p })
     .then(res => {
       if (res.status === 'ok') { document.getElementById('success-sound').play(); notifikasi(res.message); resetForm(); tarikDataServer(); } 
       else { notifikasi(res.message, 'error'); }
       resetBtnUI();
-    }).catch(err => { notifikasi('Gagal terhubung server', 'error'); resetBtnUI(); console.error(err); });
+    }).catch(err => { 
+      notifikasi(err.message, 'error'); 
+      resetBtnUI(); 
+    });
   }
 
   function tarikDataServer() {
