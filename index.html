@@ -3,182 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>OutboundPro Pro — Sistem Pemuatan</title>
+<title>OutboundPro Pro</title>
 
-<!-- Google Fonts -->
+<!-- Google Fonts & Tailwind -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 
 <script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: {
-      extend: {
-        fontFamily: {
-          sans: ['"DM Sans"', 'sans-serif'],
-          mono: ['"Space Mono"', 'monospace'],
-        },
-        colors: {
-          primary: '#00880D', 
-          surface: '#F4F6F9',
-          darkSurface: '#121212',
-          darkCard: '#1E1E1E',
-          wa: '#25D366'
-        }
-      }
-    }
-  }
+  tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['"DM Sans"', 'sans-serif'], mono: ['"Space Mono"', 'monospace'], }, colors: { primary: '#00880D', surface: '#F4F6F9', darkSurface: '#121212', darkCard: '#1E1E1E', wa: '#25D366' } } } }
 </script>
 
 <style>
   ::-webkit-scrollbar { width: 0px; height: 0px; }
-  
-  /* RESET UNTUK MENCEGAH GESER KANAN/KIRI & BAWAH */
-  *, *::before, *::after { 
-    box-sizing: border-box; 
-    -webkit-tap-highlight-color: transparent; 
-  }
-  
-  html {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #E2E8F0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #app-container {
-    flex: 1; 
-    min-height: 0; 
-    width: 100%;
-    max-width: 480px;
-    margin: 0 auto; 
-    display: flex;
-    flex-direction: column;
-    background-color: #F4F6F9;
-    position: relative;
-    overflow: hidden; 
-    box-shadow: 0 0 50px rgba(0,0,0,0.1);
-  }
-
-  .main-content {
-    flex: 1;
-    width: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    position: relative;
-    z-index: 10;
-  }
-
-  nav {
-    height: 75px;
-    width: 100%;
-    background: white;
-    border-top: 1px solid #edf2f7;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 50;
-    flex-shrink: 0; 
-  }
-
-  nav button {
-    flex: 1;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    position: relative;
-  }
-  
-  nav button.active::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    width: 20px;
-    height: 4px;
-    background: #00880D;
-    border-radius: 0 0 4px 4px;
-  }
-
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { width: 100%; height: 100%; overflow: hidden; }
+  body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #E2E8F0; overflow: hidden; display: flex; flex-direction: column; }
+  #app-container { flex: 1; min-height: 0; width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; background-color: #F4F6F9; position: relative; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.1); }
+  .main-content { flex: 1; width: 100%; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; }
+  nav { height: 75px; width: 100%; background: white; border-top: 1px solid #edf2f7; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); z-index: 50; flex-shrink: 0; }
+  nav button { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; }
+  nav button.active::after { content: ''; position: absolute; top: 0; width: 20px; height: 4px; background: #00880D; border-radius: 0 0 4px 4px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .spinner {
-    display: inline-block;
-    width: 1.2rem;
-    height: 1.2rem;
-    border: 3px solid rgba(255,255,255,.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
-  }
-
+  .spinner { display: inline-block; width: 1.2rem; height: 1.2rem; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
   .progress-bar { transition: width 1s cubic-bezier(0.65, 0, 0.35, 1); }
-
-  /* =======================================================
-     PERBAIKAN ANIMASI MODAL (Tahan banting di Kodular WebView) 
-     Kita ganti 'transform' menjadi 'bottom'
-     ======================================================= */
-  .modal-panel {
-    position: absolute;
-    left: 0;
-    right: 0;
-    width: 100%;
-    bottom: -120%; /* Tersembunyi jauh di bawah */
-    z-index: 150;
-    visibility: hidden;
-    transition: bottom 0.3s ease-out, visibility 0.3s;
-  }
-  .modal-panel.open {
-    bottom: 0; /* Naik merapat ke bawah */
-    visibility: visible;
-  }
-
-  .toast {
-    position: absolute;
-    bottom: 100px;
-    left: 50%;
-    width: max-content;
-    max-width: 90%;
-    transform: translateX(-50%) translateY(50px);
-    opacity: 0;
-    visibility: hidden;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, visibility 0.4s;
-    z-index: 200;
-  }
-  .toast.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  @media print {
-    #app-container { max-width: none; height: auto; position: static; overflow: visible; }
-    nav, header, #sub-btn, .no-print, #toast, .modal-panel, .overlay-bg { display: none !important; }
-    .main-content { overflow: visible; }
-  }
+  .modal-panel { position: absolute; left: 0; right: 0; width: 100%; bottom: -120%; z-index: 150; visibility: hidden; transition: bottom 0.3s ease-out, visibility 0.3s; }
+  .modal-panel.open { bottom: 0; visibility: visible; }
+  .toast { position: absolute; bottom: 100px; left: 50%; width: max-content; max-width: 90%; transform: translateX(-50%) translateY(50px); opacity: 0; visibility: hidden; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, visibility 0.4s; z-index: 200; }
+  .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+  @media print { #app-container { max-width: none; height: auto; position: static; overflow: visible; } nav, header, #sub-btn, .no-print, #toast, .modal-panel, .overlay-bg { display: none !important; } .main-content { overflow: visible; } }
 </style>
 </head>
 <body class="dark:bg-black">
 
 <div id="app-container" class="bg-surface dark:bg-darkSurface transition-colors">
-
-  <!-- ==================== HEADER ==================== -->
+  <!-- HEADER -->
   <header class="bg-white dark:bg-darkCard px-5 py-4 shadow-sm z-30 flex justify-between items-center no-print flex-shrink-0">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-green-400 flex items-center justify-center text-white text-xl shadow-lg">📦</div>
@@ -192,27 +52,25 @@
     </button>
   </header>
 
-  <!-- ==================== AREA KONTEN ==================== -->
+  <!-- KONTEN -->
   <div class="main-content">
-    
-    <!-- TAB 1: FORM -->
+    <!-- TAB INPUT -->
     <main id="tab-input" class="p-5 space-y-4">
       <div class="flex justify-between items-center">
         <h2 id="form-title" class="text-xl font-bold text-gray-800 dark:text-gray-100 font-sans">Catat Pemuatan</h2>
         <div class="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded text-[10px] font-bold text-primary flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> LIVE
+          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> VERCEL
         </div>
       </div>
       
       <input type="hidden" id="edit-index" value="">
 
-      <!-- Card Kendaraan & Tanggal Carian -->
+      <!-- Card Tanggal & Kendaraan -->
       <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
         <div class="space-y-1">
           <label class="text-[10px] font-bold text-gray-400 uppercase">Tanggal Carian *</label>
           <input type="date" id="inp-tanggal" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white outline-none">
         </div>
-        
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1">
             <label class="text-[10px] font-bold text-gray-400 uppercase">Group *</label>
@@ -273,18 +131,16 @@
         </div>
       </div>
 
-      <!-- Card Personil & Keterangan -->
+      <!-- Card Personil -->
       <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
         <div class="grid grid-cols-2 gap-3">
           <input type="text" id="inp-qc" placeholder="Nama QC" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm dark:text-white outline-none">
           <input type="text" id="inp-loader" placeholder="Nama Loader" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm dark:text-white outline-none">
         </div>
-        
         <div class="space-y-1">
           <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Keterangan Tambahan</label>
           <textarea id="inp-ket" rows="2" placeholder="Catatan khusus (opsional)..." class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary"></textarea>
         </div>
-
         <div id="photo-zone" onclick="document.getElementById('file-inp').click()" class="border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 rounded-2xl p-6 text-center cursor-pointer relative overflow-hidden transition-all hover:bg-gray-100">
           <div id="photo-content"><span class="text-2xl block mb-1">📸</span><p class="text-[10px] font-bold text-gray-400 uppercase">Ambil Foto Muatan</p></div>
           <img id="photo-prev" class="absolute inset-0 w-full h-full object-cover hidden">
@@ -299,7 +155,7 @@
       <button id="cancel-edit" onclick="resetForm()" class="w-full text-gray-400 text-[10px] font-bold hidden no-print tracking-widest uppercase pb-4 outline-none">Batal</button>
     </main>
 
-    <!-- TAB 2: RIWAYAT -->
+    <!-- TAB RIWAYAT -->
     <main id="tab-riwayat" class="hidden p-5">
       <div class="flex justify-between items-end mb-4">
         <div><h2 class="text-xl font-bold dark:text-white font-sans">Riwayat</h2><input type="date" id="filter-tanggal" class="mt-1 bg-transparent text-[10px] font-bold text-primary outline-none" onchange="tarikDataServer()"></div>
@@ -309,7 +165,7 @@
       <div id="hist-list" class="space-y-3 pb-5"></div>
     </main>
 
-    <!-- TAB 3: SUMMARY -->
+    <!-- TAB SUMMARY -->
     <main id="tab-summary" class="hidden p-5 space-y-4">
       <h2 class="text-xl font-bold dark:text-white">Rekap Hari Ini</h2>
       <div class="grid grid-cols-1 gap-4 pb-5">
@@ -337,23 +193,15 @@
     </main>
   </div>
 
-  <!-- ==================== NAVIGASI BAWAH ==================== -->
+  <!-- NAVIGASI -->
   <nav class="no-print">
-    <button onclick="gantiTab('input')" id="nav-input" class="text-primary active outline-none">
-      <span class="text-2xl">📝</span><span class="text-[10px] font-bold">Input</span>
-    </button>
-    <button onclick="gantiTab('riwayat')" id="nav-riwayat" class="text-gray-300 outline-none">
-      <span class="text-2xl">🕒</span><span class="text-[10px] font-bold">Riwayat</span>
-    </button>
-    <button onclick="gantiTab('summary')" id="nav-summary" class="text-gray-300 outline-none">
-      <span class="text-2xl">📊</span><span class="text-[10px] font-bold">Summary</span>
-    </button>
+    <button onclick="gantiTab('input')" id="nav-input" class="text-primary active outline-none"><span class="text-2xl">📝</span><span class="text-[10px] font-bold">Input</span></button>
+    <button onclick="gantiTab('riwayat')" id="nav-riwayat" class="text-gray-300 outline-none"><span class="text-2xl">🕒</span><span class="text-[10px] font-bold">Riwayat</span></button>
+    <button onclick="gantiTab('summary')" id="nav-summary" class="text-gray-300 outline-none"><span class="text-2xl">📊</span><span class="text-[10px] font-bold">Summary</span></button>
   </nav>
 
-  <!-- ==================== OVERLAYS & MODALS ==================== -->
-  
+  <!-- MODALS -->
   <div id="confirm-overlay" onclick="tutupReview()" class="overlay-bg absolute inset-0 hidden opacity-0 z-[90] bg-black/40 transition-opacity no-print"></div>
-  <!-- Confirm Modal -->
   <div id="confirm-modal" class="modal-panel bg-white dark:bg-darkCard rounded-t-[40px] no-print p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
     <div class="w-14 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6"></div>
     <h3 class="text-xl font-bold dark:text-white mb-4">Cek Ulang Data</h3>
@@ -372,7 +220,6 @@
   </div>
 
   <div id="group-sheet-overlay" onclick="tutupGroupSheet()" class="overlay-bg absolute inset-0 hidden opacity-0 z-[90] bg-black/40 transition-opacity no-print"></div>
-  <!-- Group Sheet Modal -->
   <div id="group-sheet" class="modal-panel h-[75%] bg-white dark:bg-darkCard rounded-t-[40px] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)] no-print">
     <div onclick="tutupGroupSheet()" class="w-full flex justify-center pt-4 pb-2 cursor-pointer"><div class="w-14 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div></div>
     <div class="px-6 pb-4 border-b border-gray-100 dark:border-gray-800">
@@ -382,469 +229,145 @@
     <div class="flex-1 overflow-y-auto p-3 pb-8" id="sheet-list"></div>
   </div>
 
-  <div id="image-modal" onclick="tutupViewerFoto()" class="overlay-bg absolute inset-0 bg-black/95 z-[250] hidden opacity-0 transition-opacity flex flex-col justify-center items-center p-4">
-    <img id="viewer-img" src="" class="w-full max-h-[70vh] object-contain rounded-3xl mb-5">
-    <div id="viewer-caption" class="text-white text-xs font-mono bg-white/10 px-6 py-2 rounded-full border border-white/20 uppercase tracking-widest text-center"></div>
-  </div>
-
-  <div id="toast" class="toast bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
-    <span id="toast-icon" class="text-lg">✅</span>
-    <span id="toast-msg" class="text-[11px] font-bold uppercase tracking-widest">DATA BERHASIL DISIMPAN</span>
-  </div>
-
+  <div id="image-modal" onclick="tutupViewerFoto()" class="overlay-bg absolute inset-0 bg-black/95 z-[250] hidden opacity-0 transition-opacity flex flex-col justify-center items-center p-4"><img id="viewer-img" src="" class="w-full max-h-[70vh] object-contain rounded-3xl mb-5"><div id="viewer-caption" class="text-white text-xs font-mono bg-white/10 px-6 py-2 rounded-full border border-white/20 uppercase tracking-widest text-center"></div></div>
+  <div id="toast" class="toast bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3"><span id="toast-icon" class="text-lg">✅</span><span id="toast-msg" class="text-[11px] font-bold uppercase tracking-widest">BERHASIL</span></div>
 </div> 
 
 <audio id="success-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" preload="auto"></audio>
 
 <script>
-  // Fungsi Helper untuk mendapatkan tanggal hari ini dalam format YYYY-MM-DD
-  function getTodayString() {
-    var d = new Date();
-    var month = '' + (d.getMonth() + 1);
-    var day = '' + d.getDate();
-    var year = d.getFullYear();
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-    return [year, month, day].join('-');
-  }
+  // =========================================================================
+  // GANTI DENGAN URL GOOGLE SCRIPT ANDA (YANG BERAKHIRAN /exec)
+  var API_URL = "https://script.google.com/macros/s/AKfycbyxW-vErShZJgi05YYGsfUm7pWqQYVu4atyun0doCDohNL7l0Qye3-JatTe6uiNf2b4dQ/exec"; 
+  // =========================================================================
 
-  // Menggunakan fungsi standar (ES5) agar aman di semua jenis WebView Android
   var GD = { BDG:['BDG01','BDG02','BDG03','BDG04','BDG05','BDG06','BDG07','BDG08','BDG09','BDG10','BDG11','BDG12','BDG13','BDG14','BDG15','BDG16','BDG17','BDG18','BDG19','BDG20','BDG21','BDG22','BDG23','BDG24','BDG25','BDG26','BDG27','BDG28','BDG29','BDG30','BDG31','BDG32','BDG33','BDG34','BDG35'], BDY:['BDY01','BDY02','BDY03','BDY04','BDY05','BDY06','BDY07','BDY08','BDY09','BDY10','BDY11','BDY12','BDY13','BDY14','BDY15','BDY16','BDY17','BDY18','BDY19','BDY20','BDY21'], CJR:['CJR01','CJR02','CJR03','CJR04','CJR05','CJR06','CJR07','CJR08','CJR09','CJR10','CJR11','CJR12','CJR13','CJR14','CJR15','CJR16','CJR17','CJR18','CJR19','CJR20','CJR21','CJR22','CJR23','CJR24','CJR25','CJR26','CJR27'], KWG:['KWG01','KWG02','KWG03','KWG04','KWG05','KWG06','KWG07','KWG08','KWG09','KWG10','KWG11','KWG12','KWG13','KWG14','KWG15','KWG16','KWG17','KWG18','KWG19','KWG20','KWG21','KWG22','KWG23','KWG24','KWG25','KWG26','KWG27','KWG28','KWG29','KWG30','KWG31','KWG32'], PBN:['PBN01','PBN02','PBN03','PBN04','PBN05','PBN06','PBN07','PBN08','PBN09','PBN10','PBN11','PBN12','PBN13','PBN14','PBN15','PBN16','PBN17','PBN18','PBN19','PBN20','PBN21','PBN22','PBN23','PBN24'] };
-  var allGroups = []; 
-  Object.keys(GD).forEach(function(l) { 
-    GD[l].forEach(function(c) { 
-      allGroups.push({code:c, letter:l}); 
-    }); 
-  });
-  
-  var riwayatData = [];
-  var toastTimer;
+  var allGroups = []; Object.keys(GD).forEach(function(l){ GD[l].forEach(function(c){ allGroups.push({code:c, letter:l}); }); });
+  var riwayatData = []; var toastTimer;
 
-  function toggleDarkMode() {
-    var h = document.documentElement; 
-    h.classList.toggle('dark');
-    var isDark = h.classList.contains('dark');
-    document.getElementById('dark-icon').textContent = isDark ? '☀️' : '🌓';
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  }
-
-  function saveUserPrefs() {
-    localStorage.setItem('lastQC', document.getElementById('inp-qc').value);
-    localStorage.setItem('lastLoader', document.getElementById('inp-loader').value);
-    localStorage.setItem('lastArea', document.getElementById('sel-area').value);
-  }
-
-  function loadUserPrefs() {
-    document.getElementById('inp-qc').value = localStorage.getItem('lastQC') || '';
-    document.getElementById('inp-loader').value = localStorage.getItem('lastLoader') || '';
-    if (localStorage.getItem('lastArea')) {
-      document.getElementById('sel-area').value = localStorage.getItem('lastArea');
-    }
-  }
+  function getTodayString() { var d = new Date(), month = ''+(d.getMonth()+1), day = ''+d.getDate(), year = d.getFullYear(); if(month.length<2) month='0'+month; if(day.length<2) day='0'+day; return [year, month, day].join('-'); }
+  function toggleDarkMode() { var h = document.documentElement; h.classList.toggle('dark'); localStorage.setItem('theme', h.classList.contains('dark') ? 'dark' : 'light'); document.getElementById('dark-icon').textContent = h.classList.contains('dark') ? '☀️' : '🌓'; }
+  function saveUserPrefs() { localStorage.setItem('lastQC', document.getElementById('inp-qc').value); localStorage.setItem('lastLoader', document.getElementById('inp-loader').value); localStorage.setItem('lastArea', document.getElementById('sel-area').value); }
+  function loadUserPrefs() { document.getElementById('inp-qc').value = localStorage.getItem('lastQC') || ''; document.getElementById('inp-loader').value = localStorage.getItem('lastLoader') || ''; if (localStorage.getItem('lastArea')) document.getElementById('sel-area').value = localStorage.getItem('lastArea'); }
 
   function gantiTab(tab) {
-    var tabs = ['input','riwayat','summary'];
-    tabs.forEach(function(t) {
-       document.getElementById('tab-'+t).classList.add('hidden');
-       var b = document.getElementById('nav-'+t);
-       b.classList.add('text-gray-300'); 
-       b.classList.remove('text-primary','active');
-    });
-    
-    document.getElementById('tab-'+tab).classList.remove('hidden');
-    var activeNav = document.getElementById('nav-'+tab);
-    activeNav.classList.add('text-primary','active');
-    activeNav.classList.remove('text-gray-300');
-    
-    if (tab === 'summary') hitungSummary();
-    if (tab === 'riwayat') tarikDataServer();
+    ['input','riwayat','summary'].forEach(function(t) { document.getElementById('tab-'+t).classList.add('hidden'); document.getElementById('nav-'+t).classList.remove('text-primary','active'); document.getElementById('nav-'+t).classList.add('text-gray-300'); });
+    document.getElementById('tab-'+tab).classList.remove('hidden'); document.getElementById('nav-'+tab).classList.add('text-primary','active'); document.getElementById('nav-'+tab).classList.remove('text-gray-300');
+    if (tab === 'summary') hitungSummary(); if (tab === 'riwayat') tarikDataServer();
   }
 
-  function bukaGroupSheet() {
-    var o = document.getElementById('group-sheet-overlay');
-    o.classList.remove('hidden'); 
-    void o.offsetWidth; 
-    o.classList.add('opacity-100');
-    document.getElementById('group-sheet').classList.add('open');
-    filterListGroup();
-  }
-
-  function tutupGroupSheet() {
-    var o = document.getElementById('group-sheet-overlay');
-    document.getElementById('group-sheet').classList.remove('open');
-    o.classList.remove('opacity-100');
-    setTimeout(function() { o.classList.add('hidden'); }, 300);
-  }
-
+  function bukaGroupSheet() { var o = document.getElementById('group-sheet-overlay'); o.classList.remove('hidden'); void o.offsetWidth; o.classList.add('opacity-100'); document.getElementById('group-sheet').classList.add('open'); filterListGroup(); }
+  function tutupGroupSheet() { document.getElementById('group-sheet').classList.remove('open'); document.getElementById('group-sheet-overlay').classList.remove('opacity-100'); setTimeout(function(){ document.getElementById('group-sheet-overlay').classList.add('hidden'); }, 300); }
   function filterListGroup() {
-    var q = document.getElementById('sheet-search').value.trim().toUpperCase();
-    var listEl = document.getElementById('sheet-list');
-    
-    var matches = allGroups;
-    if (q) {
-      matches = allGroups.filter(function(g) {
-        return g.code.includes(q) || g.letter.includes(q);
-      });
-    }
-    
-    var html = ''; 
-    var lastL = null;
-    matches.forEach(function(g) {
-      if (g.letter !== lastL) { 
-        html += '<div class="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 rounded-2xl mb-1 mt-2 font-sans">Grup ' + g.letter + '</div>'; 
-        lastL = g.letter; 
-      }
-      html += '<div onclick="pilihGroup(\'' + g.code + '\')" class="px-5 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between active:bg-green-50 rounded-2xl transition-all cursor-pointer"><span class="font-mono font-bold dark:text-white text-lg">' + g.code + '</span><span class="text-gray-300 text-xs font-sans">▶️</span></div>';
-    });
+    var q = document.getElementById('sheet-search').value.trim().toUpperCase(), listEl = document.getElementById('sheet-list'), matches = q ? allGroups.filter(function(g){ return g.code.includes(q) || g.letter.includes(q); }) : allGroups, html = '', lastL = null;
+    matches.forEach(function(g) { if (g.letter !== lastL) { html += '<div class="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 rounded-2xl mb-1 mt-2 font-sans">Grup ' + g.letter + '</div>'; lastL = g.letter; } html += '<div onclick="pilihGroup(\'' + g.code + '\')" class="px-5 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between active:bg-green-50 rounded-2xl transition-all cursor-pointer"><span class="font-mono font-bold dark:text-white text-lg">' + g.code + '</span><span class="text-gray-300 text-xs font-sans">▶️</span></div>'; });
     listEl.innerHTML = html || '<p class="text-center py-8 text-gray-400 text-xs">Tidak ditemukan</p>';
   }
-
-  function pilihGroup(code) {
-    document.getElementById('inp-group').value = code;
-    var d = document.getElementById('group-display');
-    d.textContent = code; 
-    d.classList.add('text-gray-900','dark:text-white','font-bold');
-    tutupGroupSheet();
-  }
-
-  function ubahQty(t, d) { 
-    var i = document.getElementById('v-' + t);
-    i.value = Math.max(0, (parseInt(i.value) || 0) + d);
-    hitungTotal();
-  }
-
-  function hitungTotal() { 
-    var c = Math.max(0, parseInt(document.getElementById('v-c').value) || 0);
-    var f = Math.max(0, parseInt(document.getElementById('v-f').value) || 0);
-    var k = Math.max(0, parseInt(document.getElementById('v-k').value) || 0);
-    document.getElementById('v-total').textContent = c + f + k; 
-  }
+  function pilihGroup(code) { document.getElementById('inp-group').value = code; document.getElementById('group-display').textContent = code; document.getElementById('group-display').classList.add('text-gray-900','dark:text-white','font-bold'); tutupGroupSheet(); }
+  function ubahQty(t, d) { var i = document.getElementById('v-' + t); i.value = Math.max(0, (parseInt(i.value) || 0) + d); hitungTotal(); }
+  function hitungTotal() { var c = Math.max(0, parseInt(document.getElementById('v-c').value) || 0), f = Math.max(0, parseInt(document.getElementById('v-f').value) || 0), k = Math.max(0, parseInt(document.getElementById('v-k').value) || 0); document.getElementById('v-total').textContent = c + f + k; }
 
   function reviewDataSebelumSimpan() {
-    var tgl = document.getElementById('inp-tanggal').value;
-    var g = document.getElementById('inp-group').value;
-    var n = document.getElementById('inp-nopol').value.trim();
-    var t = document.getElementById('v-total').textContent;
-    
+    var tgl = document.getElementById('inp-tanggal').value, g = document.getElementById('inp-group').value, n = document.getElementById('inp-nopol').value.trim(), t = document.getElementById('v-total').textContent;
     if (!tgl || !g || !n || t == "0") return notifikasi('Data belum lengkap!', 'error');
-
-    document.getElementById('rev-tanggal').textContent = tgl;
-    document.getElementById('rev-nopol').textContent = g + ' / ' + n.toUpperCase();
-    document.getElementById('rev-total').textContent = t + ' Dus';
-    document.getElementById('rev-area').textContent = document.getElementById('sel-area').value;
-    document.getElementById('rev-qc').textContent = document.getElementById('inp-qc').value || '-';
-    document.getElementById('rev-ket').textContent = document.getElementById('inp-ket').value || '-';
-    
-    var o = document.getElementById('confirm-overlay');
-    o.classList.remove('hidden'); 
-    void o.offsetWidth; 
-    o.classList.add('opacity-100');
-    document.getElementById('confirm-modal').classList.add('open');
+    document.getElementById('rev-tanggal').textContent = tgl; document.getElementById('rev-nopol').textContent = g + ' / ' + n.toUpperCase(); document.getElementById('rev-total').textContent = t + ' Dus'; document.getElementById('rev-area').textContent = document.getElementById('sel-area').value; document.getElementById('rev-qc').textContent = document.getElementById('inp-qc').value || '-'; document.getElementById('rev-ket').textContent = document.getElementById('inp-ket').value || '-';
+    var o = document.getElementById('confirm-overlay'); o.classList.remove('hidden'); void o.offsetWidth; o.classList.add('opacity-100'); document.getElementById('confirm-modal').classList.add('open');
   }
+  function tutupReview() { document.getElementById('confirm-modal').classList.remove('open'); document.getElementById('confirm-overlay').classList.remove('opacity-100'); setTimeout(function(){ document.getElementById('confirm-overlay').classList.add('hidden'); }, 300); }
 
-  function tutupReview() {
-    var o = document.getElementById('confirm-overlay');
-    document.getElementById('confirm-modal').classList.remove('open');
-    o.classList.remove('opacity-100');
-    setTimeout(function() { o.classList.add('hidden'); }, 300);
+  // FUNGSI PANGGIL API VERCEL (FETCH)
+  function panggilAPI(payloadData) {
+    return fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow', // Wajib untuk App Script
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Wajib untuk lolos CORS
+      body: JSON.stringify(payloadData)
+    }).then(function(res) { return res.json(); });
   }
 
   function simpanDataFinal() {
     tutupReview();
-    var tgl = document.getElementById('inp-tanggal').value;
-    var g = document.getElementById('inp-group').value;
-    var a = document.getElementById('sel-area').value;
-    var n = document.getElementById('inp-nopol').value.trim();
-    var c = parseInt(document.getElementById('v-c').value) || 0;
-    var f = parseInt(document.getElementById('v-f').value) || 0;
-    var k = parseInt(document.getElementById('v-k').value) || 0;
-    var t = c + f + k;
-    var idx = document.getElementById('edit-index').value;
-    var ket = document.getElementById('inp-ket').value;
-
-    var btn = document.getElementById('sub-btn');
-    var btnLoader = document.getElementById('btn-loader');
-    var btnText = document.getElementById('btn-text');
-    
-    btn.disabled = true; 
-    btn.classList.add('opacity-70');
-    btnLoader.classList.remove('hidden'); 
-    btnText.textContent = idx ? 'MEMPERBARUI...' : 'MENYIMPAN...';
-
-    saveUserPrefs();
+    if (API_URL.indexOf("TARUH_URL") > -1) { notifikasi("API URL Belum diganti!", "error"); return; }
 
     var p = { 
-      rowIndex: idx, tanggal: tgl, group: g, area: a, nopol: n, 
-      qc: document.getElementById('inp-qc').value, 
-      loader: document.getElementById('inp-loader').value, 
-      keterangan: ket, chiller: c, freezer: f, coklat: k, total: t, 
+      rowIndex: document.getElementById('edit-index').value, tanggal: document.getElementById('inp-tanggal').value, group: document.getElementById('inp-group').value, 
+      area: document.getElementById('sel-area').value, nopol: document.getElementById('inp-nopol').value.trim(), qc: document.getElementById('inp-qc').value, 
+      loader: document.getElementById('inp-loader').value, keterangan: document.getElementById('inp-ket').value, chiller: parseInt(document.getElementById('v-c').value) || 0, 
+      freezer: parseInt(document.getElementById('v-f').value) || 0, coklat: parseInt(document.getElementById('v-k').value) || 0, total: parseInt(document.getElementById('v-total').textContent), 
       photoLink: document.getElementById('photo-prev').src.startsWith('data') ? "" : document.getElementById('photo-prev').src 
     };
 
-    if (typeof google !== 'undefined') {
-       var fInp = document.getElementById('file-inp');
-       if (fInp.files.length > 0) {
-          compressImg(fInp.files[0], function(b64) {
-             google.script.run.withSuccessHandler(function(fr) { 
-               p.photoLink = fr.url; 
-               eksekusiFinal(p); 
-             }).withFailureHandler(function(err) { 
-               notifikasi(err, 'error'); 
-               resetBtnUI(); 
-             }).uploadFoto(b64, "FOTO_" + g + "_" + Date.now() + ".jpg");
-          });
-       } else { 
-         eksekusiFinal(p); 
-       }
-    } else {
-      setTimeout(function() { notifikasi('Berhasil (Mode Demo)'); resetForm(); resetBtnUI(); }, 1500);
-    }
+    var btn = document.getElementById('sub-btn'); btn.disabled = true; btn.classList.add('opacity-70');
+    document.getElementById('btn-loader').classList.remove('hidden'); document.getElementById('btn-text').textContent = p.rowIndex ? 'MEMPERBARUI...' : 'MENYIMPAN...';
+    saveUserPrefs();
+
+    var fInp = document.getElementById('file-inp');
+    if (fInp.files.length > 0) {
+      compressImg(fInp.files[0], function(b64) {
+         panggilAPI({ action: 'uploadFoto', payload: { base64Data: b64, fileName: "FOTO_" + p.group + "_" + Date.now() + ".jpg" } })
+         .then(function(res) {
+            p.photoLink = res.url;
+            eksekusiData(p);
+         }).catch(function(err) { notifikasi("Gagal Upload Foto", "error"); resetBtnUI(); });
+      });
+    } else { eksekusiData(p); }
   }
 
-  function eksekusiFinal(p) {
-    google.script.run.withSuccessHandler(function(res) {
-       if (res.status === 'ok') { 
-         document.getElementById('success-sound').play(); 
-         notifikasi(res.message); 
-         resetForm(); 
-         tarikDataServer(); 
-       } else { 
-         notifikasi(res.message, 'error'); 
-       }
-       resetBtnUI();
-    }).withFailureHandler(function(err) { 
-       notifikasi(err, 'error'); 
-       resetBtnUI(); 
-    }).simpanData(p);
-  }
-
-  function resetBtnUI() {
-    var btn = document.getElementById('sub-btn');
-    btn.disabled = false; 
-    btn.classList.remove('opacity-70');
-    document.getElementById('btn-loader').classList.add('hidden');
-    document.getElementById('btn-text').textContent = 'SIMPAN DATA';
-  }
-
-  function compressImg(f, cb) {
-    var r = new FileReader(); 
-    r.readAsDataURL(f);
-    r.onload = function(e) {
-      var i = new Image(); 
-      i.src = e.target.result;
-      i.onload = function() {
-        var cv = document.createElement('canvas'); 
-        var m = 800, w = i.width, h = i.height;
-        if (w > m) { h = Math.round((h * m) / w); w = m; }
-        cv.width = w; cv.height = h; 
-        var cx = cv.getContext('2d'); 
-        cx.drawImage(i, 0, 0, w, h);
-        cb(cv.toDataURL('image/jpeg', 0.7).split(',')[1]);
-      }
-    }
+  function eksekusiData(p) {
+    panggilAPI({ action: 'simpanData', payload: p })
+    .then(function(res) {
+      if (res.status === 'ok') { document.getElementById('success-sound').play(); notifikasi(res.message); resetForm(); tarikDataServer(); } 
+      else { notifikasi(res.message, 'error'); }
+      resetBtnUI();
+    }).catch(function(err) { notifikasi("Gagal Simpan Data", "error"); resetBtnUI(); });
   }
 
   function tarikDataServer() {
+    if (API_URL.indexOf("TARUH_URL") > -1) return;
     var ti = document.getElementById('filter-tanggal').value;
-    var target = ti ? ti.split('-').reverse().join('/') : null;
-    if (typeof google !== 'undefined') {
-      google.script.run.withSuccessHandler(function(res) { 
-        if (res.status === 'ok') { 
-          riwayatData = res.data; 
-          renderRiwayat(); 
-        } 
-      }).getRiwayat(target);
-    }
-  }
-
-  function salinRekap(idx) {
-    var h = null;
-    for (var i = 0; i < riwayatData.length; i++) {
-      if (riwayatData[i].rowIndex == idx) { h = riwayatData[i]; break; }
-    }
-    if (!h) return;
+    var target = ti ? ti.split('-').reverse().join('/') : getTodayString().split('-').reverse().join('/');
     
-    var txt = "*REKAP OUTBOUNDPRO*\nNopol: " + h.nopol + "\nGrup: " + h.group + "\nTotal: " + h.total + " Dus\nQC: " + h.qc + "\nKeterangan: " + (h.keterangan || '-');
-    var el = document.createElement('textarea'); 
-    el.value = txt; 
-    document.body.appendChild(el);
-    el.select(); 
-    document.execCommand('copy'); 
-    document.body.removeChild(el);
-    notifikasi('Rekap disalin!');
+    fetch(API_URL + "?action=getRiwayat&target=" + encodeURIComponent(target))
+    .then(function(res) { return res.json(); })
+    .then(function(res) { if (res.status === 'ok') { riwayatData = res.data; renderRiwayat(); } })
+    .catch(function(err) { console.log(err); });
   }
 
+  function resetBtnUI() { var btn = document.getElementById('sub-btn'); btn.disabled = false; btn.classList.remove('opacity-70'); document.getElementById('btn-loader').classList.add('hidden'); document.getElementById('btn-text').textContent = 'SIMPAN DATA'; }
+  function compressImg(f, cb) { var r = new FileReader(); r.readAsDataURL(f); r.onload = function(e) { var i = new Image(); i.src = e.target.result; i.onload = function() { var cv = document.createElement('canvas'); var m = 800, w = i.width, h = i.height; if (w > m) { h = Math.round((h * m) / w); w = m; } cv.width = w; cv.height = h; var cx = cv.getContext('2d'); cx.drawImage(i, 0, 0, w, h); cb(cv.toDataURL('image/jpeg', 0.7).split(',')[1]); } } }
+  function salinRekap(idx) { var h = riwayatData.find(function(d){ return d.rowIndex == idx; }); if (!h) return; var txt = "*REKAP OUTBOUNDPRO*\nNopol: " + h.nopol + "\nGrup: " + h.group + "\nTotal: " + h.total + " Dus\nQC: " + h.qc + "\nKeterangan: " + (h.keterangan || '-'); var el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notifikasi('Rekap disalin!'); }
+  
   function renderRiwayat() {
-    var el = document.getElementById('hist-list');
-    var q = document.getElementById('hist-search').value.toLowerCase();
-    
-    var filtered = [];
-    for (var i = 0; i < riwayatData.length; i++) {
-      var hd = riwayatData[i];
-      if (hd.nopol.toLowerCase().includes(q) || hd.group.toLowerCase().includes(q)) {
-        filtered.push(hd);
-      }
-    }
-    
-    if (!filtered.length) { 
-      el.innerHTML = '<div class="py-12 text-center text-gray-400 text-xs font-bold uppercase tracking-widest font-sans">Data Kosong</div>'; 
-      return; 
-    }
-    
+    var el = document.getElementById('hist-list'), q = document.getElementById('hist-search').value.toLowerCase();
+    var filtered = riwayatData.filter(function(h) { return h.nopol.toLowerCase().includes(q) || h.group.toLowerCase().includes(q); });
+    if (!filtered.length) { el.innerHTML = '<div class="py-12 text-center text-gray-400 text-xs font-bold uppercase tracking-widest font-sans">Data Kosong</div>'; return; }
     var htmlStr = '';
     filtered.forEach(function(h) {
       var waMsg = "*LAPORAN OUTBOUNDPRO*\nNopol: " + h.nopol + "\nGroup: " + h.group + "\nTotal: " + h.total + " Dus\nQC: " + h.qc + "\nKet: " + (h.keterangan || '-');
-      
       var cBadge = h.chiller > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-500 border border-blue-100">C:'+h.chiller+'</span>' : '';
       var fBadge = h.freezer > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-500 border border-cyan-100">F:'+h.freezer+'</span>' : '';
       var kBadge = h.coklat > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-100">K:'+h.coklat+'</span>' : '';
       var ketDiv = h.keterangan ? '<div class="bg-gray-50 dark:bg-gray-900/50 p-2 rounded-xl mb-3 text-[11px] text-gray-500 dark:text-gray-400 font-sans italic border-l-4 border-gray-200">"'+h.keterangan+'"</div>' : '';
-      var timeStr = h.timestamp ? h.timestamp.split(' ')[1] : '';
-
-      htmlStr += '<div class="bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-800">' +
-        '<div class="flex justify-between items-start mb-3">' +
-          '<div class="flex gap-3">' +
-            '<div class="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center font-bold text-primary text-xs shadow-inner font-mono">' + h.group + '</div>' +
-            '<div><h4 class="text-sm font-bold dark:text-white font-sans">' + h.nopol + '</h4><p class="text-[9px] text-gray-400 font-bold uppercase font-sans">' + h.area + ' • ' + timeStr + '</p></div>' +
-          '</div>' +
-          '<div class="bg-green-50 dark:bg-green-900/30 text-primary px-3 py-1 rounded-lg text-sm font-bold font-mono border border-green-100 dark:border-green-800">' + h.total + '</div>' +
-        '</div>' +
-        '<div class="flex flex-wrap gap-1 mb-3">' + cBadge + fBadge + kBadge + '</div>' +
-        ketDiv +
-        '<div class="flex justify-between items-center border-t border-gray-50 dark:border-gray-800 pt-3 no-print">' +
-          '<div class="flex gap-2">' +
-            '<button onclick="editData(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Edit</button>' +
-            '<button onclick="salinRekap(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Salin</button>' +
-          '</div>' +
-          '<a href="https://wa.me/?text=' + encodeURIComponent(waMsg) + '" target="_blank" class="text-[10px] font-bold text-wa bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-xl border border-green-100 font-sans outline-none">🟢 Share</a>' +
-        '</div>' +
-      '</div>';
-    });
-    el.innerHTML = htmlStr;
+      htmlStr += '<div class="bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-800"><div class="flex justify-between items-start mb-3"><div class="flex gap-3"><div class="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center font-bold text-primary text-xs shadow-inner font-mono">' + h.group + '</div><div><h4 class="text-sm font-bold dark:text-white font-sans">' + h.nopol + '</h4><p class="text-[9px] text-gray-400 font-bold uppercase font-sans">' + h.area + ' • ' + (h.timestamp ? h.timestamp.split(' ')[1] : '') + '</p></div></div><div class="bg-green-50 dark:bg-green-900/30 text-primary px-3 py-1 rounded-lg text-sm font-bold font-mono border border-green-100 dark:border-green-800">' + h.total + '</div></div><div class="flex flex-wrap gap-1 mb-3">' + cBadge + fBadge + kBadge + '</div>' + ketDiv + '<div class="flex justify-between items-center border-t border-gray-50 dark:border-gray-800 pt-3 no-print"><div class="flex gap-2"><button onclick="editData(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Edit</button><button onclick="salinRekap(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Salin</button></div><a href="https://wa.me/?text=' + encodeURIComponent(waMsg) + '" target="_blank" class="text-[10px] font-bold text-wa bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-xl border border-green-100 font-sans outline-none">🟢 Share</a></div></div>';
+    }); el.innerHTML = htmlStr;
   }
 
   function editData(idx) {
-    var d = null;
-    for (var i = 0; i < riwayatData.length; i++) {
-      if (riwayatData[i].rowIndex == idx) { d = riwayatData[i]; break; }
-    }
-    if (!d) return;
-
-    document.getElementById('edit-index').value = idx;
-    document.getElementById('form-title').textContent = "Update Data";
-    document.getElementById('cancel-edit').classList.remove('hidden');
-    pilihGroup(d.group); 
-    document.getElementById('sel-area').value = d.area; 
-    document.getElementById('inp-nopol').value = d.nopol;
-    document.getElementById('v-c').value = d.chiller; 
-    document.getElementById('v-f').value = d.freezer; 
-    document.getElementById('v-k').value = d.coklat;
-    document.getElementById('inp-qc').value = d.qc; 
-    document.getElementById('inp-loader').value = d.loader; 
-    document.getElementById('inp-ket').value = d.keterangan || '';
-    
-    if (d.tanggal) {
-      var parts = d.tanggal.split('/');
-      if (parts.length === 3) {
-        document.getElementById('inp-tanggal').value = parts[2] + '-' + parts[1] + '-' + parts[0];
-      }
-    }
-    
-    hitungTotal(); 
-    gantiTab('input');
+    var d = riwayatData.find(function(x){ return x.rowIndex == idx; }); if (!d) return;
+    document.getElementById('edit-index').value = idx; document.getElementById('form-title').textContent = "Update Data"; document.getElementById('cancel-edit').classList.remove('hidden');
+    pilihGroup(d.group); document.getElementById('sel-area').value = d.area; document.getElementById('inp-nopol').value = d.nopol; document.getElementById('v-c').value = d.chiller; document.getElementById('v-f').value = d.freezer; document.getElementById('v-k').value = d.coklat; document.getElementById('inp-qc').value = d.qc; document.getElementById('inp-loader').value = d.loader; document.getElementById('inp-ket').value = d.keterangan || '';
+    if (d.tanggal) { var pts = d.tanggal.split('/'); if (pts.length === 3) document.getElementById('inp-tanggal').value = pts[2] + '-' + pts[1] + '-' + pts[0]; }
+    hitungTotal(); gantiTab('input');
   }
 
-  function hitungSummary() {
-    var c=0, f=0, k=0; 
-    riwayatData.forEach(function(h) { 
-      c += h.chiller; f += h.freezer; k += h.coklat; 
-    });
-    var t = c+f+k; 
-    document.getElementById('sum-c').textContent = c; 
-    document.getElementById('sum-f').textContent = f; 
-    document.getElementById('sum-k').textContent = k; 
-    document.getElementById('sum-total').textContent = t;
-    if (t > 0) { 
-      document.getElementById('bar-c').style.width = (c/t*100)+'%'; 
-      document.getElementById('bar-f').style.width = (f/t*100)+'%'; 
-      document.getElementById('bar-k').style.width = (k/t*100)+'%'; 
-    }
-  }
+  function hitungSummary() { var c=0, f=0, k=0; riwayatData.forEach(function(h) { c += h.chiller; f += h.freezer; k += h.coklat; }); var t = c+f+k; document.getElementById('sum-c').textContent = c; document.getElementById('sum-f').textContent = f; document.getElementById('sum-k').textContent = k; document.getElementById('sum-total').textContent = t; if (t > 0) { document.getElementById('bar-c').style.width = (c/t*100)+'%'; document.getElementById('bar-f').style.width = (f/t*100)+'%'; document.getElementById('bar-k').style.width = (k/t*100)+'%'; } }
+  function resetForm() { document.getElementById('edit-index').value = ""; document.getElementById('form-title').textContent = "Catat Pemuatan"; document.getElementById('cancel-edit').classList.add('hidden'); document.getElementById('inp-group').value = ''; document.getElementById('group-display').textContent = 'Pilih Group'; document.getElementById('group-display').classList.remove('text-gray-900', 'dark:text-white', 'font-bold'); document.getElementById('inp-nopol').value = ''; ['c','f','k'].forEach(function(t){ document.getElementById('v-'+t).value = 0; }); document.getElementById('inp-ket').value = ''; document.getElementById('inp-tanggal').value = getTodayString(); hitungTotal(); document.getElementById('photo-prev').classList.add('hidden'); document.getElementById('photo-prev').src = ""; document.getElementById('photo-content').classList.remove('hidden'); document.getElementById('file-inp').value = ''; loadUserPrefs(); }
+  function notifikasi(m, t) { var el = document.getElementById('toast'); document.getElementById('toast-msg').textContent = m.toUpperCase(); document.getElementById('toast-icon').textContent = t === 'error' ? '⚠️' : '✅'; el.classList.add('show'); if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3000); }
+  function bukaViewerFoto(u, g, n) { var m = document.getElementById('image-modal'), d = u, mt = u.match(/\/d\/([a-zA-Z0-9-_]+)/); if (mt) d = 'https://drive.google.com/thumbnail?id=' + mt[1] + '&sz=w800'; document.getElementById('viewer-img').src = d; document.getElementById('viewer-caption').textContent = g + ' - ' + n; m.classList.remove('hidden'); void m.offsetWidth; m.classList.add('opacity-100'); }
+  function tutupViewerFoto() { var m = document.getElementById('image-modal'); m.classList.remove('opacity-100'); setTimeout(function(){ m.classList.add('hidden'); }, 300); }
+  function previewFoto(e) { var f = e.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(ev) { document.getElementById('photo-prev').src = ev.target.result; document.getElementById('photo-prev').classList.remove('hidden'); document.getElementById('photo-content').classList.add('hidden'); }; r.readAsDataURL(f); }
 
-  function resetForm() {
-    document.getElementById('edit-index').value = ""; 
-    document.getElementById('form-title').textContent = "Catat Pemuatan";
-    document.getElementById('cancel-edit').classList.add('hidden'); 
-    document.getElementById('inp-group').value = ''; 
-    document.getElementById('group-display').textContent = 'Pilih Group';
-    document.getElementById('group-display').classList.remove('text-gray-900', 'dark:text-white', 'font-bold'); 
-    document.getElementById('inp-nopol').value = '';
-    
-    var keys = ['c','f','k'];
-    for(var i=0; i<keys.length; i++) {
-      document.getElementById('v-'+keys[i]).value = 0;
-    }
-    
-    document.getElementById('inp-ket').value = ''; 
-    document.getElementById('inp-tanggal').value = getTodayString();
-    
-    hitungTotal(); 
-    document.getElementById('photo-prev').classList.add('hidden'); 
-    document.getElementById('photo-prev').src = "";
-    document.getElementById('photo-content').classList.remove('hidden'); 
-    document.getElementById('file-inp').value = ''; 
-    loadUserPrefs();
-  }
-
-  function notifikasi(m, t) {
-    var el = document.getElementById('toast'); 
-    document.getElementById('toast-msg').textContent = m.toUpperCase();
-    document.getElementById('toast-icon').textContent = t === 'error' ? '⚠️' : '✅'; 
-    
-    el.classList.add('show'); 
-    
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(function() { 
-      el.classList.remove('show'); 
-    }, 3000);
-  }
-
-  function bukaViewerFoto(u, g, n) {
-    var m = document.getElementById('image-modal');
-    var d = u; 
-    var mt = u.match(/\/d\/([a-zA-Z0-9-_]+)/); 
-    if (mt) d = 'https://drive.google.com/thumbnail?id=' + mt[1] + '&sz=w800';
-    document.getElementById('viewer-img').src = d; 
-    document.getElementById('viewer-caption').textContent = g + ' - ' + n;
-    m.classList.remove('hidden'); 
-    void m.offsetWidth; 
-    m.classList.add('opacity-100');
-  }
-
-  function tutupViewerFoto() { 
-    var m = document.getElementById('image-modal'); 
-    m.classList.remove('opacity-100'); 
-    setTimeout(function() { m.classList.add('hidden'); }, 300); 
-  }
-
-  function previewFoto(e) {
-    var f = e.target.files[0]; 
-    if (!f) return;
-    var r = new FileReader(); 
-    r.onload = function(ev) { 
-      document.getElementById('photo-prev').src = ev.target.result; 
-      document.getElementById('photo-prev').classList.remove('hidden'); 
-      document.getElementById('photo-content').classList.add('hidden'); 
-    }; 
-    r.readAsDataURL(f);
-  }
-
-  window.onload = function() { 
-    if (localStorage.getItem('theme') === 'dark') toggleDarkMode(); 
-    document.getElementById('inp-tanggal').value = getTodayString();
-    loadUserPrefs(); 
-    tarikDataServer(); 
-  };
+  window.onload = function() { if (localStorage.getItem('theme') === 'dark') toggleDarkMode(); document.getElementById('inp-tanggal').value = getTodayString(); loadUserPrefs(); tarikDataServer(); };
 </script>
 </body>
 </html>
