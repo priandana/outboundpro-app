@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>OutboundPro Pro</title>
-
+a
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -216,7 +216,7 @@
   }
   function tutupReview() { document.getElementById('confirm-modal').classList.remove('open'); document.getElementById('confirm-overlay').classList.remove('opacity-100'); setTimeout(() => document.getElementById('confirm-overlay').classList.add('hidden'), 300); }
 
-  // API CALLS MENGGUNAKAN FETCH
+  // API CALLS MENGGUNAKAN FETCH DENGAN FIX CORS (text/plain)
   function simpanDataFinal() {
     tutupReview();
     if (API_URL === "TARUH_URL_GOOGLE_SCRIPT_ANDA_DISINI") { alert("Mohon ganti API_URL di kode HTML dengan URL Google Script Anda!"); return; }
@@ -236,22 +236,30 @@
     var fInp = document.getElementById('file-inp');
     if (fInp.files.length > 0) {
       compressImg(fInp.files[0], function(b64) {
-         fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadFoto', payload: { base64Data: b64, fileName: "FOTO_"+p.group+"_"+Date.now()+".jpg" } }) })
+         fetch(API_URL, { 
+           method: 'POST', 
+           headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // FIX CORS DISINI
+           body: JSON.stringify({ action: 'uploadFoto', payload: { base64Data: b64, fileName: "FOTO_"+p.group+"_"+Date.now()+".jpg" } }) 
+         })
          .then(res => res.json())
          .then(fr => { p.photoLink = fr.url; eksekusiFinal(p); })
-         .catch(err => { notifikasi('Gagal upload foto', 'error'); resetBtnUI(); });
+         .catch(err => { notifikasi('Gagal upload foto', 'error'); resetBtnUI(); console.error(err); });
       });
     } else { eksekusiFinal(p); }
   }
 
   function eksekusiFinal(p) {
-    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'simpanData', payload: p }) })
+    fetch(API_URL, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // FIX CORS DISINI
+      body: JSON.stringify({ action: 'simpanData', payload: p }) 
+    })
     .then(res => res.json())
     .then(res => {
       if (res.status === 'ok') { document.getElementById('success-sound').play(); notifikasi(res.message); resetForm(); tarikDataServer(); } 
       else { notifikasi(res.message, 'error'); }
       resetBtnUI();
-    }).catch(err => { notifikasi('Gagal terhubung server', 'error'); resetBtnUI(); });
+    }).catch(err => { notifikasi('Gagal terhubung server', 'error'); resetBtnUI(); console.error(err); });
   }
 
   function tarikDataServer() {
