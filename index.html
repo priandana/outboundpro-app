@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>OutboundPro Pro</title>
+<title>OutboundPro Pro — Sistem Pemuatan</title>
 
 <!-- Google Fonts & Tailwind -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,7 +69,7 @@
       <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
         <div class="space-y-1">
           <label class="text-[10px] font-bold text-gray-400 uppercase">Tanggal Carian *</label>
-          <input type="date" id="inp-tanggal" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white outline-none">
+          <input type="date" id="inp-tanggal" class="w-full block appearance-none bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white outline-none" style="-webkit-appearance: none; min-width: 0; max-width: 100%; box-sizing: border-box;">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1">
@@ -284,13 +284,12 @@
       body: JSON.stringify(payloadData)
     })
     .then(function(res) {
-      return res.text(); // Ambil sebagai teks biasa dulu
+      return res.text(); 
     })
     .then(function(text) {
       try {
-        return JSON.parse(text); // Coba ubah ke JSON
+        return JSON.parse(text); 
       } catch (e) {
-        // Jika gagal diubah ke JSON, artinya Google memblokir dan mengirim halaman HTML
         console.error("Respon bukan JSON:", text);
         throw new Error("Akses ditolak oleh Google. Pastikan Akses Deployment di-set ke 'Siapa Saja' / 'Anyone'.");
       }
@@ -325,7 +324,7 @@
                throw new Error(res.message || "Gagal dari server");
             }
          }).catch(function(err) { 
-            alert("⚠️ INFO ERROR:\n" + err.message); // MUNCULKAN ERROR ASLI
+            alert("⚠️ INFO ERROR:\n" + err.message);
             notifikasi("Gagal Upload Foto", "error"); 
             resetBtnUI(); 
          });
@@ -340,7 +339,7 @@
       else { throw new Error(res.message); }
       resetBtnUI();
     }).catch(function(err) { 
-      alert("⚠️ INFO ERROR:\n" + err.message); // MUNCULKAN ERROR ASLI
+      alert("⚠️ INFO ERROR:\n" + err.message); 
       notifikasi("Gagal Simpan Data", "error"); 
       resetBtnUI(); 
     });
@@ -358,7 +357,65 @@
   }
 
   function resetBtnUI() { var btn = document.getElementById('sub-btn'); btn.disabled = false; btn.classList.remove('opacity-70'); document.getElementById('btn-loader').classList.add('hidden'); document.getElementById('btn-text').textContent = 'SIMPAN DATA'; }
-  function compressImg(f, cb) { var r = new FileReader(); r.readAsDataURL(f); r.onload = function(e) { var i = new Image(); i.src = e.target.result; i.onload = function() { var cv = document.createElement('canvas'); var m = 800, w = i.width, h = i.height; if (w > m) { h = Math.round((h * m) / w); w = m; } cv.width = w; cv.height = h; var cx = cv.getContext('2d'); cx.drawImage(i, 0, 0, w, h); cb(cv.toDataURL('image/jpeg', 0.7).split(',')[1]); } } }
+  
+  // =========================================================================
+  // FUNGSI KOMPRESI & PENAMBAHAN WATERMARK (KEMBALI DENGAN RATA TENGAH)
+  // =========================================================================
+  function compressImg(f, cb) {
+    var r = new FileReader(); 
+    r.readAsDataURL(f);
+    r.onload = function(e) {
+      var i = new Image(); 
+      i.src = e.target.result;
+      i.onload = function() {
+        var cv = document.createElement('canvas'); 
+        var m = 800, w = i.width, h = i.height;
+        
+        // Resize agar tidak terlalu besar
+        if (w > m) { h = Math.round((h * m) / w); w = m; }
+        cv.width = w; cv.height = h; 
+        var cx = cv.getContext('2d'); 
+        cx.drawImage(i, 0, 0, w, h);
+        
+        // --- WATERMARK TANGGAL ---
+        var d = new Date();
+        var tgl = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth()+1)).slice(-2) + "/" + d.getFullYear();
+        var jam = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+        var textWatermark = "OUTBOUNDPRO • " + tgl + " " + jam + " WIB";
+        
+        // Ukuran dihitung berdasar Lebar (w) agar tidak kepanjangan di foto HP
+        var fontSize = Math.max(12, Math.floor(w * 0.035));
+        var bannerHeight = fontSize * 2.5;
+        
+        // Banner Hitam Semi Transparan
+        cx.fillStyle = "rgba(0, 0, 0, 0.6)"; 
+        cx.fillRect(0, h - bannerHeight, w, bannerHeight);
+        
+        // Teks Watermark Rata Tengah (Center)
+        cx.font = "bold " + fontSize + "px 'Space Mono', monospace";
+        cx.fillStyle = "#ffffff";
+        cx.textAlign = "center";
+        cx.textBaseline = "middle";
+        cx.fillText(textWatermark, w / 2, h - (bannerHeight / 2));
+        // -----------------------
+        
+        cb(cv.toDataURL('image/jpeg', 0.8).split(',')[1]);
+      }
+    }
+  }
+
+  function previewFoto(e) {
+    var f = e.target.files[0]; 
+    if (!f) return;
+    
+    // Watermark langsung terlihat di preview
+    compressImg(f, function(b64) {
+      document.getElementById('photo-prev').src = "data:image/jpeg;base64," + b64; 
+      document.getElementById('photo-prev').classList.remove('hidden'); 
+      document.getElementById('photo-content').classList.add('hidden'); 
+    });
+  }
+
   function salinRekap(idx) { var h = riwayatData.find(function(d){ return d.rowIndex == idx; }); if (!h) return; var txt = "*REKAP OUTBOUNDPRO*\nNopol: " + h.nopol + "\nGrup: " + h.group + "\nTotal: " + h.total + " Dus\nQC: " + h.qc + "\nKeterangan: " + (h.keterangan || '-'); var el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notifikasi('Rekap disalin!'); }
   
   function renderRiwayat() {
@@ -389,9 +446,8 @@
   function notifikasi(m, t) { var el = document.getElementById('toast'); document.getElementById('toast-msg').textContent = m.toUpperCase(); document.getElementById('toast-icon').textContent = t === 'error' ? '⚠️' : '✅'; el.classList.add('show'); if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3000); }
   function bukaViewerFoto(u, g, n) { var m = document.getElementById('image-modal'), d = u, mt = u.match(/\/d\/([a-zA-Z0-9-_]+)/); if (mt) d = 'https://drive.google.com/thumbnail?id=' + mt[1] + '&sz=w800'; document.getElementById('viewer-img').src = d; document.getElementById('viewer-caption').textContent = g + ' - ' + n; m.classList.remove('hidden'); void m.offsetWidth; m.classList.add('opacity-100'); }
   function tutupViewerFoto() { var m = document.getElementById('image-modal'); m.classList.remove('opacity-100'); setTimeout(function(){ m.classList.add('hidden'); }, 300); }
-  function previewFoto(e) { var f = e.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(ev) { document.getElementById('photo-prev').src = ev.target.result; document.getElementById('photo-prev').classList.remove('hidden'); document.getElementById('photo-content').classList.add('hidden'); }; r.readAsDataURL(f); }
 
-  window.onload = function() { if (localStorage.getItem('theme') === 'dark') toggleDarkMode(); document.getElementById('inp-tanggal').value = getTodayString(); loadUserPrefs(); tarikDataServer(); };
+  window.onload = function() { if (localStorage.getItem('theme') === 'dark') toggleDarkMode(); document.getElementById('inp-tanggal').value = getTodayString(); document.getElementById('filter-tanggal').value = getTodayString(); loadUserPrefs(); tarikDataServer(); };
 </script>
 </body>
 </html>
