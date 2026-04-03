@@ -295,6 +295,9 @@
   var allGroups = []; Object.keys(GD).forEach(function(l){ GD[l].forEach(function(c){ allGroups.push({code:c, letter:l}); }); });
   var riwayatData = []; var toastTimer;
 
+  // FUNGSI PEMBANTU GETAR (HAPTIC)
+  function getar(pola) { if (window.navigator && window.navigator.vibrate) { navigator.vibrate(pola); } }
+
   function getTodayString() { var d = new Date(), month = ''+(d.getMonth()+1), day = ''+d.getDate(), year = d.getFullYear(); if(month.length<2) month='0'+month; if(day.length<2) day='0'+day; return [year, month, day].join('-'); }
   function toggleDarkMode() { var h = document.documentElement; h.classList.toggle('dark'); localStorage.setItem('theme', h.classList.contains('dark') ? 'dark' : 'light'); document.getElementById('dark-icon').textContent = h.classList.contains('dark') ? '☀️' : '🌓'; }
   function saveUserPrefs() { localStorage.setItem('lastQC', document.getElementById('inp-qc').value); localStorage.setItem('lastLoader', document.getElementById('inp-loader').value); localStorage.setItem('lastArea', document.getElementById('sel-area').value); }
@@ -352,6 +355,7 @@
     if (!loader) { loaderEl.classList.add('error-shake'); isValid = false; if(!firstInvalidEl) firstInvalidEl = loaderEl; }
 
     if (!isValid) {
+       getar([50, 50, 50]); // HP akan bergetar tek-tek-tek
        notifikasi('Lengkapi kolom wajib yang berkedip!', 'error');
        
        // Auto Scroll meluncur ke elemen pertama yang belum diisi
@@ -429,6 +433,7 @@
                throw new Error(res.message || "Gagal dari server");
             }
          }).catch(function(err) { 
+            getar([50, 50, 50]);
             alert("⚠️ INFO ERROR:\n" + err.message);
             notifikasi("Gagal Upload Foto", "error"); 
             resetBtnUI(); 
@@ -440,10 +445,17 @@
   function eksekusiData(p) {
     panggilAPI({ action: 'simpanData', payload: p })
     .then(function(res) {
-      if (res.status === 'ok') { document.getElementById('success-sound').play(); notifikasi(res.message); resetForm(); tarikDataServer(); } 
+      if (res.status === 'ok') { 
+         getar([100]); // Getar sukses
+         document.getElementById('success-sound').play(); 
+         notifikasi(res.message); 
+         resetForm(); 
+         tarikDataServer(); 
+      } 
       else { throw new Error(res.message); }
       resetBtnUI();
     }).catch(function(err) { 
+      getar([50, 50, 50]);
       alert("⚠️ INFO ERROR:\n" + err.message); 
       notifikasi("Gagal Simpan Data", "error"); 
       resetBtnUI(); 
@@ -455,9 +467,13 @@
     var ti = document.getElementById('filter-tanggal').value;
     var target = ti ? ti.split('-').reverse().join('/') : getTodayString().split('-').reverse().join('/');
     
-    // --- TAMPILKAN ANIMASI LOADING SAAT MENGAMBIL DATA ---
+    // --- TAMPILKAN ANIMASI LOADING SKELETON SCREEN ---
     var el = document.getElementById('hist-list');
-    el.innerHTML = '<div class="py-12 flex flex-col items-center justify-center space-y-3"><div class="w-8 h-8 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin"></div><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans">Memuat Data...</p></div>';
+    var skeletonHtml = '';
+    for(var i=0; i<3; i++) {
+      skeletonHtml += '<div class="bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 animate-pulse"><div class="flex justify-between items-start mb-3"><div class="flex gap-3"><div class="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700"></div><div class="space-y-2 py-1"><div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24"></div><div class="h-2 bg-gray-200 dark:bg-gray-700 rounded w-32"></div></div></div><div class="w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded-lg"></div></div><div class="flex gap-2 mb-3"><div class="w-10 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div><div class="w-10 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div></div><div class="flex justify-between border-t border-gray-100 dark:border-gray-800 pt-3"><div class="flex gap-2"><div class="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded-xl"></div><div class="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded-xl"></div></div><div class="w-16 h-6 bg-gray-200 dark:bg-gray-700 rounded-xl"></div></div></div>';
+    }
+    el.innerHTML = '<div class="space-y-3 pb-5">' + skeletonHtml + '</div>';
 
     fetch(API_URL + "?action=getRiwayat&target=" + encodeURIComponent(target))
     .then(function(res) { return res.json(); })
@@ -528,7 +544,22 @@
     });
   }
 
-  function salinRekap(idx) { var h = riwayatData.find(function(d){ return d.rowIndex == idx; }); if (!h) return; var txt = "*REKAP OUTBOUNDPRO*\nNopol: " + h.nopol + "\nGrup: " + h.group + "\nTotal: " + h.total + " Dus\nQC: " + h.qc + "\nKeterangan: " + (h.keterangan || '-'); var el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notifikasi('Rekap disalin!'); }
+  function salinRekap(idx) { 
+    var h = riwayatData.find(function(d){ return d.rowIndex == idx; }); 
+    if (!h) return; 
+    
+    // FORMAT SALIN TERBARU
+    var txt = "*REKAP MUATAN OUTBOUNDPRO*\n----------------------------\n📅 Tanggal: " + (h.tanggal || '-') + "\n🚛 Group: " + h.group + "\n📍 Area: " + h.area + "\n🔢 Nopol: " + h.nopol + "\n📦 Total: " + h.total + " Dus\n   (C:" + h.chiller + ", F:" + h.freezer + ", K:" + h.coklat + ")\n👤 Checker: " + h.qc + "\n👤 Loader: " + h.loader; 
+    if(h.keterangan) txt += "\n📝 Ket: " + h.keterangan; 
+    
+    var el = document.createElement('textarea'); 
+    el.value = txt; 
+    document.body.appendChild(el); 
+    el.select(); 
+    document.execCommand('copy'); 
+    document.body.removeChild(el); 
+    notifikasi('Rekap disalin!'); 
+  }
   
   function renderRiwayat() {
     var el = document.getElementById('hist-list'), q = document.getElementById('hist-search').value.toLowerCase();
@@ -536,7 +567,10 @@
     if (!filtered.length) { el.innerHTML = '<div class="py-12 text-center text-gray-400 text-xs font-bold uppercase tracking-widest font-sans">Data Kosong</div>'; return; }
     var htmlStr = '';
     filtered.forEach(function(h) {
-      var waMsg = "*LAPORAN OUTBOUNDPRO*\nNopol: " + h.nopol + "\nGroup: " + h.group + "\nTotal: " + h.total + " Dus\nQC: " + h.qc + "\nKet: " + (h.keterangan || '-');
+      // FORMAT WHATSAPP TERBARU
+      var waMsg = "*REKAP MUATAN OUTBOUNDPRO*\n----------------------------\n📅 Tanggal: " + (h.tanggal || '-') + "\n🚛 Group: " + h.group + "\n📍 Area: " + h.area + "\n🔢 Nopol: " + h.nopol + "\n📦 Total: " + h.total + " Dus\n   (C:" + h.chiller + ", F:" + h.freezer + ", K:" + h.coklat + ")\n👤 Checker: " + h.qc + "\n👤 Loader: " + h.loader;
+      if(h.keterangan) waMsg += "\n📝 Ket: " + h.keterangan;
+      
       var cBadge = h.chiller > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-500 border border-blue-100">C:'+h.chiller+'</span>' : '';
       var fBadge = h.freezer > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-500 border border-cyan-100">F:'+h.freezer+'</span>' : '';
       var kBadge = h.coklat > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-100">K:'+h.coklat+'</span>' : '';
