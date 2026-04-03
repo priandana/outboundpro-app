@@ -12,7 +12,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <script>
-  tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['"DM Sans"', 'sans-serif'], mono: ['"Space Mono"', 'monospace'], }, colors: { primary: '#00880D', surface: '#F4F6F9', darkSurface: '#121212', darkCard: '#1E1E1E', wa: '#25D366' } } } }
+  tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['"DM Sans"', 'sans-serif'], mono: ['"Space Mono"', 'monospace'], }, colors: { primary: '#DC2626', surface: '#F4F6F9', darkSurface: '#121212', darkCard: '#1E1E1E', wa: '#25D366' } } } }
 </script>
 
 <style>
@@ -24,7 +24,7 @@
   .main-content { flex: 1; width: 100%; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; }
   nav { height: 75px; width: 100%; background: white; border-top: 1px solid #edf2f7; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); z-index: 50; flex-shrink: 0; }
   nav button { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; }
-  nav button.active::after { content: ''; position: absolute; top: 0; width: 20px; height: 4px; background: #00880D; border-radius: 0 0 4px 4px; }
+  nav button.active::after { content: ''; position: absolute; top: 0; width: 20px; height: 4px; background: #DC2626; border-radius: 0 0 4px 4px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .spinner { display: inline-block; width: 1.2rem; height: 1.2rem; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
   .progress-bar { transition: width 1s cubic-bezier(0.65, 0, 0.35, 1); }
@@ -41,7 +41,7 @@
   <!-- HEADER -->
   <header class="bg-white dark:bg-darkCard px-5 py-4 shadow-sm z-30 flex justify-between items-center no-print flex-shrink-0">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-green-400 flex items-center justify-center text-white text-xl shadow-lg">📦</div>
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-red-400 flex items-center justify-center text-white text-xl shadow-lg">📦</div>
       <div>
         <h1 class="text-lg font-bold text-gray-900 dark:text-white leading-tight">Outbound<span class="text-primary">Pro</span></h1>
         <p class="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Cold Storage</p>
@@ -58,8 +58,8 @@
     <main id="tab-input" class="p-5 space-y-4">
       <div class="flex justify-between items-center">
         <h2 id="form-title" class="text-xl font-bold text-gray-800 dark:text-gray-100 font-sans">Catat Pemuatan</h2>
-        <div class="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded text-[10px] font-bold text-primary flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> VERCEL
+        <div class="bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded text-[10px] font-bold text-primary flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> VERCEL
         </div>
       </div>
       
@@ -148,7 +148,7 @@
         <input type="file" id="file-inp" accept="image/*" capture="environment" class="hidden" onchange="previewFoto(event)">
       </div>
 
-      <button id="sub-btn" onclick="reviewDataSebelumSimpan()" class="w-full bg-primary active:scale-95 text-white rounded-2xl py-4 font-bold shadow-lg shadow-green-100 dark:shadow-none transition-all flex items-center justify-center gap-3 outline-none">
+      <button id="sub-btn" onclick="reviewDataSebelumSimpan()" class="w-full bg-primary active:scale-95 text-white rounded-2xl py-4 font-bold shadow-lg shadow-red-100 dark:shadow-none transition-all flex items-center justify-center gap-3 outline-none">
         <span id="btn-loader" class="spinner hidden"></span>
         <span id="btn-text">SIMPAN DATA</span>
       </button>
@@ -181,7 +181,7 @@
            <div class="flex justify-between items-center"><div class="flex items-center gap-3"><span>🍫</span><p class="text-[10px] font-bold text-gray-400 uppercase">Coklat</p></div><p class="text-xl font-mono font-bold dark:text-white" id="sum-k">0</p></div>
            <div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden"><div id="bar-k" class="progress-bar h-full bg-amber-500 w-0"></div></div>
         </div>
-        <div class="bg-gradient-to-br from-primary to-green-600 p-6 rounded-[40px] text-white shadow-xl shadow-green-100 dark:shadow-none flex items-center justify-between overflow-hidden relative">
+        <div class="bg-gradient-to-br from-primary to-red-600 p-6 rounded-[40px] text-white shadow-xl shadow-red-100 dark:shadow-none flex items-center justify-between overflow-hidden relative">
           <div class="z-10">
             <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1 font-sans">Akumulasi Muatan</p>
             <p class="text-5xl font-mono font-bold" id="sum-total">0</p>
@@ -215,7 +215,7 @@
     </div>
     <div class="flex gap-3">
       <button onclick="tutupReview()" class="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 py-4 rounded-2xl font-bold outline-none">UBAH</button>
-      <button onclick="simpanDataFinal()" class="flex-2 w-full bg-primary text-white py-4 px-4 rounded-2xl font-bold shadow-lg shadow-green-100 outline-none">KIRIM SEKARANG</button>
+      <button onclick="simpanDataFinal()" class="flex-2 w-full bg-primary text-white py-4 px-4 rounded-2xl font-bold shadow-lg shadow-red-100 outline-none">KIRIM SEKARANG</button>
     </div>
   </div>
 
@@ -260,7 +260,7 @@
   function tutupGroupSheet() { document.getElementById('group-sheet').classList.remove('open'); document.getElementById('group-sheet-overlay').classList.remove('opacity-100'); setTimeout(function(){ document.getElementById('group-sheet-overlay').classList.add('hidden'); }, 300); }
   function filterListGroup() {
     var q = document.getElementById('sheet-search').value.trim().toUpperCase(), listEl = document.getElementById('sheet-list'), matches = q ? allGroups.filter(function(g){ return g.code.includes(q) || g.letter.includes(q); }) : allGroups, html = '', lastL = null;
-    matches.forEach(function(g) { if (g.letter !== lastL) { html += '<div class="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 rounded-2xl mb-1 mt-2 font-sans">Grup ' + g.letter + '</div>'; lastL = g.letter; } html += '<div onclick="pilihGroup(\'' + g.code + '\')" class="px-5 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between active:bg-green-50 rounded-2xl transition-all cursor-pointer"><span class="font-mono font-bold dark:text-white text-lg">' + g.code + '</span><span class="text-gray-300 text-xs font-sans">▶️</span></div>'; });
+    matches.forEach(function(g) { if (g.letter !== lastL) { html += '<div class="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-red-50 dark:bg-red-800/50 rounded-2xl mb-1 mt-2 font-sans">Grup ' + g.letter + '</div>'; lastL = g.letter; } html += '<div onclick="pilihGroup(\'' + g.code + '\')" class="px-5 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between active:bg-red-50 rounded-2xl transition-all cursor-pointer"><span class="font-mono font-bold dark:text-white text-lg">' + g.code + '</span><span class="text-gray-300 text-xs font-sans">▶️</span></div>'; });
     listEl.innerHTML = html || '<p class="text-center py-8 text-gray-400 text-xs">Tidak ditemukan</p>';
   }
   function pilihGroup(code) { document.getElementById('inp-group').value = code; document.getElementById('group-display').textContent = code; document.getElementById('group-display').classList.add('text-gray-900','dark:text-white','font-bold'); tutupGroupSheet(); }
@@ -352,7 +352,7 @@
     
     // --- TAMPILKAN ANIMASI LOADING SAAT MENGAMBIL DATA ---
     var el = document.getElementById('hist-list');
-    el.innerHTML = '<div class="py-12 flex flex-col items-center justify-center space-y-3"><div class="w-8 h-8 border-4 border-gray-200 border-t-green-600 rounded-full animate-spin"></div><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans">Memuat Data...</p></div>';
+    el.innerHTML = '<div class="py-12 flex flex-col items-center justify-center space-y-3"><div class="w-8 h-8 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin"></div><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans">Memuat Data...</p></div>';
 
     fetch(API_URL + "?action=getRiwayat&target=" + encodeURIComponent(target))
     .then(function(res) { return res.json(); })
@@ -436,7 +436,7 @@
       var fBadge = h.freezer > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-500 border border-cyan-100">F:'+h.freezer+'</span>' : '';
       var kBadge = h.coklat > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-100">K:'+h.coklat+'</span>' : '';
       var ketDiv = h.keterangan ? '<div class="bg-gray-50 dark:bg-gray-900/50 p-2 rounded-xl mb-3 text-[11px] text-gray-500 dark:text-gray-400 font-sans italic border-l-4 border-gray-200">"'+h.keterangan+'"</div>' : '';
-      htmlStr += '<div class="bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-800"><div class="flex justify-between items-start mb-3"><div class="flex gap-3"><div class="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center font-bold text-primary text-xs shadow-inner font-mono">' + h.group + '</div><div><h4 class="text-sm font-bold dark:text-white font-sans">' + h.nopol + '</h4><p class="text-[9px] text-gray-400 font-bold uppercase font-sans">' + h.area + ' • ' + (h.timestamp ? h.timestamp.split(' ')[1] : '') + '</p></div></div><div class="bg-green-50 dark:bg-green-900/30 text-primary px-3 py-1 rounded-lg text-sm font-bold font-mono border border-green-100 dark:border-green-800">' + h.total + '</div></div><div class="flex flex-wrap gap-1 mb-3">' + cBadge + fBadge + kBadge + '</div>' + ketDiv + '<div class="flex justify-between items-center border-t border-gray-50 dark:border-gray-800 pt-3 no-print"><div class="flex gap-2"><button onclick="editData(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Edit</button><button onclick="salinRekap(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Salin</button></div><a href="https://wa.me/?text=' + encodeURIComponent(waMsg) + '" target="_blank" class="text-[10px] font-bold text-wa bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-xl border border-green-100 font-sans outline-none">🟢 Share</a></div></div>';
+      htmlStr += '<div class="bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-800"><div class="flex justify-between items-start mb-3"><div class="flex gap-3"><div class="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center font-bold text-primary text-xs shadow-inner font-mono">' + h.group + '</div><div><h4 class="text-sm font-bold dark:text-white font-sans">' + h.nopol + '</h4><p class="text-[9px] text-gray-400 font-bold uppercase font-sans">' + h.area + ' • ' + (h.timestamp ? h.timestamp.split(' ')[1] : '') + '</p></div></div><div class="bg-red-50 dark:bg-red-900/30 text-primary px-3 py-1 rounded-lg text-sm font-bold font-mono border border-red-100 dark:border-red-800">' + h.total + '</div></div><div class="flex flex-wrap gap-1 mb-3">' + cBadge + fBadge + kBadge + '</div>' + ketDiv + '<div class="flex justify-between items-center border-t border-gray-50 dark:border-gray-800 pt-3 no-print"><div class="flex gap-2"><button onclick="editData(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Edit</button><button onclick="salinRekap(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Salin</button></div><a href="https://wa.me/?text=' + encodeURIComponent(waMsg) + '" target="_blank" class="text-[10px] font-bold text-wa bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-xl border border-green-100 font-sans outline-none">🟢 Share</a></div></div>';
     }); el.innerHTML = htmlStr;
   }
 
