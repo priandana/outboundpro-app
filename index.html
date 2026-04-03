@@ -3,182 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>OutboundPro Pro — Sistem Pemuatan</title>
+<title>OutboundPro Pro</title>
 
-<!-- Google Fonts -->
+<!-- Google Fonts & Tailwind -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 
 <script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: {
-      extend: {
-        fontFamily: {
-          sans: ['"DM Sans"', 'sans-serif'],
-          mono: ['"Space Mono"', 'monospace'],
-        },
-        colors: {
-          primary: '#00880D', 
-          surface: '#F4F6F9',
-          darkSurface: '#121212',
-          darkCard: '#1E1E1E',
-          wa: '#25D366'
-        }
-      }
-    }
-  }
+  tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['"DM Sans"', 'sans-serif'], mono: ['"Space Mono"', 'monospace'], }, colors: { primary: '#00880D', surface: '#F4F6F9', darkSurface: '#121212', darkCard: '#1E1E1E', wa: '#25D366' } } } }
 </script>
 
 <style>
   ::-webkit-scrollbar { width: 0px; height: 0px; }
-  
-  /* RESET UNTUK MENCEGAH GESER KANAN/KIRI & BAWAH */
-  *, *::before, *::after { 
-    box-sizing: border-box; 
-    -webkit-tap-highlight-color: transparent; 
-  }
-  
-  html {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #E2E8F0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #app-container {
-    flex: 1; 
-    min-height: 0; 
-    width: 100%;
-    max-width: 480px;
-    margin: 0 auto; 
-    display: flex;
-    flex-direction: column;
-    background-color: #F4F6F9;
-    position: relative;
-    overflow: hidden; 
-    box-shadow: 0 0 50px rgba(0,0,0,0.1);
-  }
-
-  .main-content {
-    flex: 1;
-    width: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    position: relative;
-    z-index: 10;
-  }
-
-  nav {
-    height: 75px;
-    width: 100%;
-    background: white;
-    border-top: 1px solid #edf2f7;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 50;
-    flex-shrink: 0; 
-  }
-
-  nav button {
-    flex: 1;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    position: relative;
-  }
-  
-  nav button.active::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    width: 20px;
-    height: 4px;
-    background: #00880D;
-    border-radius: 0 0 4px 4px;
-  }
-
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { width: 100%; height: 100%; overflow: hidden; }
+  body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #E2E8F0; overflow: hidden; display: flex; flex-direction: column; }
+  #app-container { flex: 1; min-height: 0; width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; background-color: #F4F6F9; position: relative; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.1); }
+  .main-content { flex: 1; width: 100%; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; }
+  nav { height: 75px; width: 100%; background: white; border-top: 1px solid #edf2f7; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); z-index: 50; flex-shrink: 0; }
+  nav button { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; }
+  nav button.active::after { content: ''; position: absolute; top: 0; width: 20px; height: 4px; background: #00880D; border-radius: 0 0 4px 4px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .spinner {
-    display: inline-block;
-    width: 1.2rem;
-    height: 1.2rem;
-    border: 3px solid rgba(255,255,255,.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
-  }
-
+  .spinner { display: inline-block; width: 1.2rem; height: 1.2rem; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
   .progress-bar { transition: width 1s cubic-bezier(0.65, 0, 0.35, 1); }
-
-  /* =======================================================
-     PERBAIKAN ANIMASI MODAL (Tahan banting di Kodular WebView) 
-     Kita ganti 'transform' menjadi 'bottom'
-     ======================================================= */
-  .modal-panel {
-    position: absolute;
-    left: 0;
-    right: 0;
-    width: 100%;
-    bottom: -120%; /* Tersembunyi jauh di bawah */
-    z-index: 150;
-    visibility: hidden;
-    transition: bottom 0.3s ease-out, visibility 0.3s;
-  }
-  .modal-panel.open {
-    bottom: 0; /* Naik merapat ke bawah */
-    visibility: visible;
-  }
-
-  .toast {
-    position: absolute;
-    bottom: 100px;
-    left: 50%;
-    width: max-content;
-    max-width: 90%;
-    transform: translateX(-50%) translateY(50px);
-    opacity: 0;
-    visibility: hidden;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, visibility 0.4s;
-    z-index: 200;
-  }
-  .toast.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  @media print {
-    #app-container { max-width: none; height: auto; position: static; overflow: visible; }
-    nav, header, #sub-btn, .no-print, #toast, .modal-panel, .overlay-bg { display: none !important; }
-    .main-content { overflow: visible; }
-  }
+  .modal-panel { position: absolute; left: 0; right: 0; width: 100%; bottom: -120%; z-index: 150; visibility: hidden; transition: bottom 0.3s ease-out, visibility 0.3s; }
+  .modal-panel.open { bottom: 0; visibility: visible; }
+  .toast { position: absolute; bottom: 100px; left: 50%; width: max-content; max-width: 90%; transform: translateX(-50%) translateY(50px); opacity: 0; visibility: hidden; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, visibility 0.4s; z-index: 200; }
+  .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+  @media print { #app-container { max-width: none; height: auto; position: static; overflow: visible; } nav, header, #sub-btn, .no-print, #toast, .modal-panel, .overlay-bg { display: none !important; } .main-content { overflow: visible; } }
 </style>
 </head>
 <body class="dark:bg-black">
 
 <div id="app-container" class="bg-surface dark:bg-darkSurface transition-colors">
-
-  <!-- ==================== HEADER ==================== -->
+  <!-- HEADER -->
   <header class="bg-white dark:bg-darkCard px-5 py-4 shadow-sm z-30 flex justify-between items-center no-print flex-shrink-0">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-green-400 flex items-center justify-center text-white text-xl shadow-lg">📦</div>
@@ -192,15 +52,14 @@
     </button>
   </header>
 
-  <!-- ==================== AREA KONTEN ==================== -->
+  <!-- KONTEN -->
   <div class="main-content">
-    
-    <!-- TAB 1: FORM -->
+    <!-- TAB INPUT -->
     <main id="tab-input" class="p-5 space-y-4">
       <div class="flex justify-between items-center">
         <h2 id="form-title" class="text-xl font-bold text-gray-800 dark:text-gray-100 font-sans">Catat Pemuatan</h2>
         <div class="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded text-[10px] font-bold text-primary flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> LIVE
+          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> VERCEL
         </div>
       </div>
       
@@ -210,9 +69,8 @@
       <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
         <div class="space-y-1">
           <label class="text-[10px] font-bold text-gray-400 uppercase">Tanggal Carian *</label>
-          <input type="date" id="inp-tanggal" class="w-full block appearance-none bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white outline-none" style="-webkit-appearance: none; min-width: 0; max-width: 100%; box-sizing: border-box;">
+          <input type="date" id="inp-tanggal" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white outline-none">
         </div>
-        
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1">
             <label class="text-[10px] font-bold text-gray-400 uppercase">Group *</label>
@@ -273,18 +131,16 @@
         </div>
       </div>
 
-      <!-- Card Personil & Keterangan -->
+      <!-- Card Personil -->
       <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
         <div class="grid grid-cols-2 gap-3">
           <input type="text" id="inp-qc" placeholder="Nama QC" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm dark:text-white outline-none">
           <input type="text" id="inp-loader" placeholder="Nama Loader" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm dark:text-white outline-none">
         </div>
-        
         <div class="space-y-1">
           <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Keterangan Tambahan</label>
           <textarea id="inp-ket" rows="2" placeholder="Catatan khusus (opsional)..." class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary"></textarea>
         </div>
-
         <div id="photo-zone" onclick="document.getElementById('file-inp').click()" class="border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 rounded-2xl p-6 text-center cursor-pointer relative overflow-hidden transition-all hover:bg-gray-100">
           <div id="photo-content"><span class="text-2xl block mb-1">📸</span><p class="text-[10px] font-bold text-gray-400 uppercase">Ambil Foto Muatan</p></div>
           <img id="photo-prev" class="absolute inset-0 w-full h-full object-cover hidden">
@@ -299,7 +155,7 @@
       <button id="cancel-edit" onclick="resetForm()" class="w-full text-gray-400 text-[10px] font-bold hidden no-print tracking-widest uppercase pb-4 outline-none">Batal</button>
     </main>
 
-    <!-- TAB 2: RIWAYAT -->
+    <!-- TAB RIWAYAT -->
     <main id="tab-riwayat" class="hidden p-5">
       <div class="flex justify-between items-end mb-4">
         <div><h2 class="text-xl font-bold dark:text-white font-sans">Riwayat</h2><input type="date" id="filter-tanggal" class="mt-1 bg-transparent text-[10px] font-bold text-primary outline-none" onchange="tarikDataServer()"></div>
@@ -309,7 +165,7 @@
       <div id="hist-list" class="space-y-3 pb-5"></div>
     </main>
 
-    <!-- TAB 3: SUMMARY -->
+    <!-- TAB SUMMARY -->
     <main id="tab-summary" class="hidden p-5 space-y-4">
       <h2 class="text-xl font-bold dark:text-white">Rekap Hari Ini</h2>
       <div class="grid grid-cols-1 gap-4 pb-5">
@@ -337,23 +193,15 @@
     </main>
   </div>
 
-  <!-- ==================== NAVIGASI BAWAH ==================== -->
+  <!-- NAVIGASI -->
   <nav class="no-print">
-    <button onclick="gantiTab('input')" id="nav-input" class="text-primary active outline-none">
-      <span class="text-2xl">📝</span><span class="text-[10px] font-bold">Input</span>
-    </button>
-    <button onclick="gantiTab('riwayat')" id="nav-riwayat" class="text-gray-300 outline-none">
-      <span class="text-2xl">🕒</span><span class="text-[10px] font-bold">Riwayat</span>
-    </button>
-    <button onclick="gantiTab('summary')" id="nav-summary" class="text-gray-300 outline-none">
-      <span class="text-2xl">📊</span><span class="text-[10px] font-bold">Summary</span>
-    </button>
+    <button onclick="gantiTab('input')" id="nav-input" class="text-primary active outline-none"><span class="text-2xl">📝</span><span class="text-[10px] font-bold">Input</span></button>
+    <button onclick="gantiTab('riwayat')" id="nav-riwayat" class="text-gray-300 outline-none"><span class="text-2xl">🕒</span><span class="text-[10px] font-bold">Riwayat</span></button>
+    <button onclick="gantiTab('summary')" id="nav-summary" class="text-gray-300 outline-none"><span class="text-2xl">📊</span><span class="text-[10px] font-bold">Summary</span></button>
   </nav>
 
-  <!-- ==================== OVERLAYS & MODALS ==================== -->
-  
+  <!-- MODALS -->
   <div id="confirm-overlay" onclick="tutupReview()" class="overlay-bg absolute inset-0 hidden opacity-0 z-[90] bg-black/40 transition-opacity no-print"></div>
-  <!-- Confirm Modal -->
   <div id="confirm-modal" class="modal-panel bg-white dark:bg-darkCard rounded-t-[40px] no-print p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
     <div class="w-14 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6"></div>
     <h3 class="text-xl font-bold dark:text-white mb-4">Cek Ulang Data</h3>
@@ -372,7 +220,6 @@
   </div>
 
   <div id="group-sheet-overlay" onclick="tutupGroupSheet()" class="overlay-bg absolute inset-0 hidden opacity-0 z-[90] bg-black/40 transition-opacity no-print"></div>
-  <!-- Group Sheet Modal -->
   <div id="group-sheet" class="modal-panel h-[75%] bg-white dark:bg-darkCard rounded-t-[40px] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)] no-print">
     <div onclick="tutupGroupSheet()" class="w-full flex justify-center pt-4 pb-2 cursor-pointer"><div class="w-14 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div></div>
     <div class="px-6 pb-4 border-b border-gray-100 dark:border-gray-800">
@@ -382,16 +229,8 @@
     <div class="flex-1 overflow-y-auto p-3 pb-8" id="sheet-list"></div>
   </div>
 
-  <div id="image-modal" onclick="tutupViewerFoto()" class="overlay-bg absolute inset-0 bg-black/95 z-[250] hidden opacity-0 transition-opacity flex flex-col justify-center items-center p-4">
-    <img id="viewer-img" src="" class="w-full max-h-[70vh] object-contain rounded-3xl mb-5">
-    <div id="viewer-caption" class="text-white text-xs font-mono bg-white/10 px-6 py-2 rounded-full border border-white/20 uppercase tracking-widest text-center"></div>
-  </div>
-
-  <div id="toast" class="toast bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
-    <span id="toast-icon" class="text-lg">✅</span>
-    <span id="toast-msg" class="text-[11px] font-bold uppercase tracking-widest">DATA BERHASIL DISIMPAN</span>
-  </div>
-
+  <div id="image-modal" onclick="tutupViewerFoto()" class="overlay-bg absolute inset-0 bg-black/95 z-[250] hidden opacity-0 transition-opacity flex flex-col justify-center items-center p-4"><img id="viewer-img" src="" class="w-full max-h-[70vh] object-contain rounded-3xl mb-5"><div id="viewer-caption" class="text-white text-xs font-mono bg-white/10 px-6 py-2 rounded-full border border-white/20 uppercase tracking-widest text-center"></div></div>
+  <div id="toast" class="toast bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3"><span id="toast-icon" class="text-lg">✅</span><span id="toast-msg" class="text-[11px] font-bold uppercase tracking-widest">BERHASIL</span></div>
 </div> 
 
 <audio id="success-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" preload="auto"></audio>
@@ -399,7 +238,7 @@
 <script>
   // =========================================================================
   // GANTI DENGAN URL GOOGLE SCRIPT ANDA (YANG BERAKHIRAN /exec)
-  var API_URL = "1fqAdBg-IzmFe-JLVcLxd5d6rFl04YANf75JpkHCHjdo"; 
+  var API_URL = "https://script.google.com/macros/s/AKfycbyxW-vErShZJgi05YYGsfUm7pWqQYVu4atyun0doCDohNL7l0Qye3-JatTe6uiNf2b4dQ/exec"; 
   // =========================================================================
 
   var GD = { BDG:['BDG01','BDG02','BDG03','BDG04','BDG05','BDG06','BDG07','BDG08','BDG09','BDG10','BDG11','BDG12','BDG13','BDG14','BDG15','BDG16','BDG17','BDG18','BDG19','BDG20','BDG21','BDG22','BDG23','BDG24','BDG25','BDG26','BDG27','BDG28','BDG29','BDG30','BDG31','BDG32','BDG33','BDG34','BDG35'], BDY:['BDY01','BDY02','BDY03','BDY04','BDY05','BDY06','BDY07','BDY08','BDY09','BDY10','BDY11','BDY12','BDY13','BDY14','BDY15','BDY16','BDY17','BDY18','BDY19','BDY20','BDY21'], CJR:['CJR01','CJR02','CJR03','CJR04','CJR05','CJR06','CJR07','CJR08','CJR09','CJR10','CJR11','CJR12','CJR13','CJR14','CJR15','CJR16','CJR17','CJR18','CJR19','CJR20','CJR21','CJR22','CJR23','CJR24','CJR25','CJR26','CJR27'], KWG:['KWG01','KWG02','KWG03','KWG04','KWG05','KWG06','KWG07','KWG08','KWG09','KWG10','KWG11','KWG12','KWG13','KWG14','KWG15','KWG16','KWG17','KWG18','KWG19','KWG20','KWG21','KWG22','KWG23','KWG24','KWG25','KWG26','KWG27','KWG28','KWG29','KWG30','KWG31','KWG32'], PBN:['PBN01','PBN02','PBN03','PBN04','PBN05','PBN06','PBN07','PBN08','PBN09','PBN10','PBN11','PBN12','PBN13','PBN14','PBN15','PBN16','PBN17','PBN18','PBN19','PBN20','PBN21','PBN22','PBN23','PBN24'] };
@@ -436,14 +275,26 @@
   }
   function tutupReview() { document.getElementById('confirm-modal').classList.remove('open'); document.getElementById('confirm-overlay').classList.remove('opacity-100'); setTimeout(function(){ document.getElementById('confirm-overlay').classList.add('hidden'); }, 300); }
 
-  // FUNGSI PANGGIL API VERCEL (FETCH)
+  // FUNGSI PANGGIL API VERCEL DENGAN DETEKTOR ERROR
   function panggilAPI(payloadData) {
     return fetch(API_URL, {
       method: 'POST',
-      redirect: 'follow', // Wajib untuk App Script
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Wajib untuk lolos CORS
+      redirect: 'follow', 
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payloadData)
-    }).then(function(res) { return res.json(); });
+    })
+    .then(function(res) {
+      return res.text(); // Ambil sebagai teks biasa dulu
+    })
+    .then(function(text) {
+      try {
+        return JSON.parse(text); // Coba ubah ke JSON
+      } catch (e) {
+        // Jika gagal diubah ke JSON, artinya Google memblokir dan mengirim halaman HTML
+        console.error("Respon bukan JSON:", text);
+        throw new Error("Akses ditolak oleh Google. Pastikan Akses Deployment di-set ke 'Siapa Saja' / 'Anyone'.");
+      }
+    });
   }
 
   function simpanDataFinal() {
@@ -467,9 +318,17 @@
       compressImg(fInp.files[0], function(b64) {
          panggilAPI({ action: 'uploadFoto', payload: { base64Data: b64, fileName: "FOTO_" + p.group + "_" + Date.now() + ".jpg" } })
          .then(function(res) {
-            p.photoLink = res.url;
-            eksekusiData(p);
-         }).catch(function(err) { notifikasi("Gagal Upload Foto", "error"); resetBtnUI(); });
+            if(res.status === 'ok') {
+               p.photoLink = res.url;
+               eksekusiData(p);
+            } else {
+               throw new Error(res.message || "Gagal dari server");
+            }
+         }).catch(function(err) { 
+            alert("⚠️ INFO ERROR:\n" + err.message); // MUNCULKAN ERROR ASLI
+            notifikasi("Gagal Upload Foto", "error"); 
+            resetBtnUI(); 
+         });
       });
     } else { eksekusiData(p); }
   }
@@ -478,15 +337,19 @@
     panggilAPI({ action: 'simpanData', payload: p })
     .then(function(res) {
       if (res.status === 'ok') { document.getElementById('success-sound').play(); notifikasi(res.message); resetForm(); tarikDataServer(); } 
-      else { notifikasi(res.message, 'error'); }
+      else { throw new Error(res.message); }
       resetBtnUI();
-    }).catch(function(err) { notifikasi("Gagal Simpan Data", "error"); resetBtnUI(); });
+    }).catch(function(err) { 
+      alert("⚠️ INFO ERROR:\n" + err.message); // MUNCULKAN ERROR ASLI
+      notifikasi("Gagal Simpan Data", "error"); 
+      resetBtnUI(); 
+    });
   }
 
   function tarikDataServer() {
     if (API_URL.indexOf("TARUH_URL") > -1) return;
     var ti = document.getElementById('filter-tanggal').value;
-    var target = ti ? ti : getTodayString();
+    var target = ti ? ti.split('-').reverse().join('/') : getTodayString().split('-').reverse().join('/');
     
     fetch(API_URL + "?action=getRiwayat&target=" + encodeURIComponent(target))
     .then(function(res) { return res.json(); })
@@ -495,67 +358,7 @@
   }
 
   function resetBtnUI() { var btn = document.getElementById('sub-btn'); btn.disabled = false; btn.classList.remove('opacity-70'); document.getElementById('btn-loader').classList.add('hidden'); document.getElementById('btn-text').textContent = 'SIMPAN DATA'; }
-  
-  // =========================================================================
-  // FUNGSI KOMPRESI & PENAMBAHAN WATERMARK (DIPERBAIKAN: RATA TENGAH & PROPORSIONAL)
-  // =========================================================================
-  function compressImg(f, cb) {
-    var r = new FileReader(); 
-    r.readAsDataURL(f);
-    r.onload = function(e) {
-      var i = new Image(); 
-      i.src = e.target.result;
-      i.onload = function() {
-        var cv = document.createElement('canvas'); 
-        var m = 800, w = i.width, h = i.height;
-        
-        // Resize logic
-        if (w > m) { h = Math.round((h * m) / w); w = m; }
-        cv.width = w; cv.height = h; 
-        var cx = cv.getContext('2d'); 
-        cx.drawImage(i, 0, 0, w, h);
-        
-        // --- WATERMARK TANGGAL ---
-        var d = new Date();
-        var tgl = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth()+1)).slice(-2) + "/" + d.getFullYear();
-        var jam = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
-        var textWatermark = "OUTBOUNDPRO • " + tgl + " " + jam + " WIB";
-        
-        // Ukuran dinamis menggunakan LEBAR (w) agar tidak raksasa di foto portrait (berdiri)
-        var fontSize = Math.max(12, Math.floor(w * 0.035));
-        var bannerHeight = fontSize * 2.5;
-        
-        // Background banner semi transparan di bagian bawah
-        cx.fillStyle = "rgba(0, 0, 0, 0.6)"; 
-        cx.fillRect(0, h - bannerHeight, w, bannerHeight);
-        
-        // Cetak teks watermark: Posisi TENGAH agar rapi dan tidak terpotong
-        cx.font = "bold " + fontSize + "px 'Space Mono', monospace";
-        cx.fillStyle = "#ffffff";
-        cx.textAlign = "center";
-        cx.textBaseline = "middle";
-        
-        // Gambar teks tepat di titik tengah kanvas
-        cx.fillText(textWatermark, w / 2, h - (bannerHeight / 2));
-        // -----------------------
-        
-        cb(cv.toDataURL('image/jpeg', 0.8).split(',')[1]);
-      }
-    }
-  }
-
-  function previewFoto(e) {
-    var f = e.target.files[0]; 
-    if (!f) return;
-    
-    // Panggil compressImg agar watermark ikut tercetak di preview
-    compressImg(f, function(b64) {
-      document.getElementById('photo-prev').src = "data:image/jpeg;base64," + b64; 
-      document.getElementById('photo-prev').classList.remove('hidden'); 
-      document.getElementById('photo-content').classList.add('hidden'); 
-    });
-  }
-
+  function compressImg(f, cb) { var r = new FileReader(); r.readAsDataURL(f); r.onload = function(e) { var i = new Image(); i.src = e.target.result; i.onload = function() { var cv = document.createElement('canvas'); var m = 800, w = i.width, h = i.height; if (w > m) { h = Math.round((h * m) / w); w = m; } cv.width = w; cv.height = h; var cx = cv.getContext('2d'); cx.drawImage(i, 0, 0, w, h); cb(cv.toDataURL('image/jpeg', 0.7).split(',')[1]); } } }
   function salinRekap(idx) { var h = riwayatData.find(function(d){ return d.rowIndex == idx; }); if (!h) return; var txt = "*REKAP OUTBOUNDPRO*\nNopol: " + h.nopol + "\nGrup: " + h.group + "\nTotal: " + h.total + " Dus\nQC: " + h.qc + "\nKeterangan: " + (h.keterangan || '-'); var el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); notifikasi('Rekap disalin!'); }
   
   function renderRiwayat() {
@@ -577,7 +380,7 @@
     var d = riwayatData.find(function(x){ return x.rowIndex == idx; }); if (!d) return;
     document.getElementById('edit-index').value = idx; document.getElementById('form-title').textContent = "Update Data"; document.getElementById('cancel-edit').classList.remove('hidden');
     pilihGroup(d.group); document.getElementById('sel-area').value = d.area; document.getElementById('inp-nopol').value = d.nopol; document.getElementById('v-c').value = d.chiller; document.getElementById('v-f').value = d.freezer; document.getElementById('v-k').value = d.coklat; document.getElementById('inp-qc').value = d.qc; document.getElementById('inp-loader').value = d.loader; document.getElementById('inp-ket').value = d.keterangan || '';
-    if (d.tanggal) { document.getElementById('inp-tanggal').value = d.tanggal; }
+    if (d.tanggal) { var pts = d.tanggal.split('/'); if (pts.length === 3) document.getElementById('inp-tanggal').value = pts[2] + '-' + pts[1] + '-' + pts[0]; }
     hitungTotal(); gantiTab('input');
   }
 
@@ -586,8 +389,9 @@
   function notifikasi(m, t) { var el = document.getElementById('toast'); document.getElementById('toast-msg').textContent = m.toUpperCase(); document.getElementById('toast-icon').textContent = t === 'error' ? '⚠️' : '✅'; el.classList.add('show'); if (toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3000); }
   function bukaViewerFoto(u, g, n) { var m = document.getElementById('image-modal'), d = u, mt = u.match(/\/d\/([a-zA-Z0-9-_]+)/); if (mt) d = 'https://drive.google.com/thumbnail?id=' + mt[1] + '&sz=w800'; document.getElementById('viewer-img').src = d; document.getElementById('viewer-caption').textContent = g + ' - ' + n; m.classList.remove('hidden'); void m.offsetWidth; m.classList.add('opacity-100'); }
   function tutupViewerFoto() { var m = document.getElementById('image-modal'); m.classList.remove('opacity-100'); setTimeout(function(){ m.classList.add('hidden'); }, 300); }
+  function previewFoto(e) { var f = e.target.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(ev) { document.getElementById('photo-prev').src = ev.target.result; document.getElementById('photo-prev').classList.remove('hidden'); document.getElementById('photo-content').classList.add('hidden'); }; r.readAsDataURL(f); }
 
-  window.onload = function() { if (localStorage.getItem('theme') === 'dark') toggleDarkMode(); document.getElementById('inp-tanggal').value = getTodayString(); document.getElementById('filter-tanggal').value = getTodayString(); loadUserPrefs(); tarikDataServer(); };
+  window.onload = function() { if (localStorage.getItem('theme') === 'dark') toggleDarkMode(); document.getElementById('inp-tanggal').value = getTodayString(); loadUserPrefs(); tarikDataServer(); };
 </script>
 </body>
 </html>
