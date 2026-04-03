@@ -399,7 +399,7 @@
 <script>
   // =========================================================================
   // GANTI DENGAN URL GOOGLE SCRIPT ANDA (YANG BERAKHIRAN /exec)
-  var API_URL = "https://script.google.com/macros/s/AKfycbyxW-vErShZJgi05YYGsfUm7pWqQYVu4atyun0doCDohNL7l0Qye3-JatTe6uiNf2b4dQ/exec"; 
+  var API_URL = "TARUH_URL_GOOGLE_SCRIPT_ANDA_DISINI"; 
   // =========================================================================
 
   var GD = { BDG:['BDG01','BDG02','BDG03','BDG04','BDG05','BDG06','BDG07','BDG08','BDG09','BDG10','BDG11','BDG12','BDG13','BDG14','BDG15','BDG16','BDG17','BDG18','BDG19','BDG20','BDG21','BDG22','BDG23','BDG24','BDG25','BDG26','BDG27','BDG28','BDG29','BDG30','BDG31','BDG32','BDG33','BDG34','BDG35'], BDY:['BDY01','BDY02','BDY03','BDY04','BDY05','BDY06','BDY07','BDY08','BDY09','BDY10','BDY11','BDY12','BDY13','BDY14','BDY15','BDY16','BDY17','BDY18','BDY19','BDY20','BDY21'], CJR:['CJR01','CJR02','CJR03','CJR04','CJR05','CJR06','CJR07','CJR08','CJR09','CJR10','CJR11','CJR12','CJR13','CJR14','CJR15','CJR16','CJR17','CJR18','CJR19','CJR20','CJR21','CJR22','CJR23','CJR24','CJR25','CJR26','CJR27'], KWG:['KWG01','KWG02','KWG03','KWG04','KWG05','KWG06','KWG07','KWG08','KWG09','KWG10','KWG11','KWG12','KWG13','KWG14','KWG15','KWG16','KWG17','KWG18','KWG19','KWG20','KWG21','KWG22','KWG23','KWG24','KWG25','KWG26','KWG27','KWG28','KWG29','KWG30','KWG31','KWG32'], PBN:['PBN01','PBN02','PBN03','PBN04','PBN05','PBN06','PBN07','PBN08','PBN09','PBN10','PBN11','PBN12','PBN13','PBN14','PBN15','PBN16','PBN17','PBN18','PBN19','PBN20','PBN21','PBN22','PBN23','PBN24'] };
@@ -497,7 +497,7 @@
   function resetBtnUI() { var btn = document.getElementById('sub-btn'); btn.disabled = false; btn.classList.remove('opacity-70'); document.getElementById('btn-loader').classList.add('hidden'); document.getElementById('btn-text').textContent = 'SIMPAN DATA'; }
   
   // =========================================================================
-  // FUNGSI KOMPRESI & PENAMBAHAN WATERMARK (DIPERBARUI)
+  // FUNGSI KOMPRESI & PENAMBAHAN WATERMARK (DIPERBAIKAN: RATA TENGAH & PROPORSIONAL)
   // =========================================================================
   function compressImg(f, cb) {
     var r = new FileReader(); 
@@ -508,6 +508,8 @@
       i.onload = function() {
         var cv = document.createElement('canvas'); 
         var m = 800, w = i.width, h = i.height;
+        
+        // Resize logic
         if (w > m) { h = Math.round((h * m) / w); w = m; }
         cv.width = w; cv.height = h; 
         var cx = cv.getContext('2d'); 
@@ -519,21 +521,22 @@
         var jam = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
         var textWatermark = "OUTBOUNDPRO • " + tgl + " " + jam + " WIB";
         
-        // Ukuran dinamis menyesuaikan resolusi foto
-        var fontSize = Math.max(14, Math.floor(h * 0.035));
-        var padding = fontSize;
-        var bannerHeight = fontSize + (padding * 1.2);
+        // Ukuran dinamis menggunakan LEBAR (w) agar tidak raksasa di foto portrait (berdiri)
+        var fontSize = Math.max(12, Math.floor(w * 0.035));
+        var bannerHeight = fontSize * 2.5;
         
         // Background banner semi transparan di bagian bawah
         cx.fillStyle = "rgba(0, 0, 0, 0.6)"; 
         cx.fillRect(0, h - bannerHeight, w, bannerHeight);
         
-        // Cetak teks watermark
+        // Cetak teks watermark: Posisi TENGAH agar rapi dan tidak terpotong
         cx.font = "bold " + fontSize + "px 'Space Mono', monospace";
         cx.fillStyle = "#ffffff";
-        cx.textAlign = "right";
+        cx.textAlign = "center";
         cx.textBaseline = "middle";
-        cx.fillText(textWatermark, w - padding, h - (bannerHeight / 2));
+        
+        // Gambar teks tepat di titik tengah kanvas
+        cx.fillText(textWatermark, w / 2, h - (bannerHeight / 2));
         // -----------------------
         
         cb(cv.toDataURL('image/jpeg', 0.8).split(',')[1]);
