@@ -110,20 +110,20 @@
       <!-- Card Tanggal & Kendaraan -->
       <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
         <div class="space-y-1">
-          <label class="text-[10px] font-bold text-gray-400 uppercase">Tanggal Carian *</label>
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Tanggal Carian <span class="text-red-500">*</span></label>
           <input type="date" id="inp-tanggal" class="w-full block appearance-none bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white outline-none transition-colors" style="-webkit-appearance: none; min-width: 0; max-width: 100%; box-sizing: border-box;">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1">
-            <label class="text-[10px] font-bold text-gray-400 uppercase">Group *</label>
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Group <span class="text-red-500">*</span></label>
             <button id="btn-group-select" onclick="bukaGroupSheet()" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-left flex justify-between items-center outline-none transition-colors">
               <span id="group-display" class="text-sm font-medium text-gray-400 truncate">Pilih Group</span>
             </button>
             <input type="hidden" id="inp-group">
           </div>
           <div class="space-y-1">
-            <label class="text-[10px] font-bold text-gray-400 uppercase">Area *</label>
-            <select id="sel-area" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white outline-none">
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Area <span class="text-red-500">*</span></label>
+            <select id="sel-area" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white outline-none transition-colors">
               <option value="" disabled selected>Pilih Area</option>
               <option value="BANDUNG 1">BANDUNG 1</option>
               <option value="BANDUNG 2">BANDUNG 2</option>
@@ -134,15 +134,15 @@
           </div>
         </div>
         <div class="space-y-1">
-          <label class="text-[10px] font-bold text-gray-400 uppercase">Nomor Polisi *</label>
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Nomor Polisi <span class="text-red-500">*</span></label>
           <input type="text" id="inp-nopol" placeholder="Cth: D 1234 ABC" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white uppercase outline-none transition-colors">
         </div>
       </div>
 
       <!-- Card Muatan -->
-      <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3">
+      <div id="card-muatan" class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3">
         <div class="flex justify-between items-center mb-1">
-          <h3 class="text-[10px] font-bold text-gray-400 uppercase">📦 Jumlah Dus</h3>
+          <h3 class="text-[10px] font-bold text-gray-400 uppercase">📦 Jumlah Dus <span class="text-red-500">*</span></h3>
           <span id="badge-total" class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-xs font-bold px-3 py-1 rounded-lg font-mono transition-colors border border-transparent">TOTAL: <span id="v-total">0</span></span>
         </div>
         <div class="space-y-2">
@@ -176,12 +176,18 @@
       <!-- Card Personil -->
       <div class="bg-white dark:bg-darkCard p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
         <div class="grid grid-cols-2 gap-3">
-          <input type="text" id="inp-qc" placeholder="Nama QC" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm dark:text-white outline-none">
-          <input type="text" id="inp-loader" placeholder="Nama Loader" class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm dark:text-white outline-none">
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nama QC <span class="text-red-500">*</span></label>
+            <input type="text" id="inp-qc" placeholder="Nama QC" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm dark:text-white outline-none transition-colors">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nama Loader <span class="text-red-500">*</span></label>
+            <input type="text" id="inp-loader" placeholder="Nama Loader" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-sm dark:text-white outline-none transition-colors">
+          </div>
         </div>
         <div class="space-y-1">
-          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Keterangan Tambahan</label>
-          <textarea id="inp-ket" rows="2" placeholder="Catatan khusus (opsional)..." class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary"></textarea>
+          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Keterangan Tambahan <span class="text-gray-300 dark:text-gray-500 normal-case font-medium">(Opsional)</span></label>
+          <textarea id="inp-ket" rows="2" placeholder="Catatan khusus..." class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary transition-colors"></textarea>
         </div>
         <div id="photo-zone" onclick="document.getElementById('file-inp').click()" class="border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 rounded-2xl p-6 text-center cursor-pointer relative overflow-hidden transition-all hover:bg-gray-100">
           <div id="photo-content"><span class="text-2xl block mb-1">📸</span><p class="text-[10px] font-bold text-gray-400 uppercase">Ambil Foto Muatan</p></div>
@@ -190,7 +196,7 @@
         <input type="file" id="file-inp" accept="image/*" capture="environment" class="hidden" onchange="previewFoto(event)">
       </div>
 
-      <button id="sub-btn" onclick="reviewDataSebelumSimpan()" class="w-full bg-primary active:scale-95 text-white rounded-2xl py-4 font-bold shadow-lg shadow-red-100 dark:shadow-none transition-all flex items-center justify-center gap-3 outline-none">
+      <button id="sub-btn" onclick="reviewDataSebelumSimpan()" class="w-full bg-primary active:scale-95 text-white rounded-2xl py-4 font-bold shadow-lg shadow-red-100 dark:shadow-none transition-all flex items-center justify-center gap-3 outline-none mt-2">
         <span id="btn-loader" class="spinner hidden"></span>
         <span id="btn-text">SIMPAN DATA</span>
       </button>
@@ -309,35 +315,51 @@
   function ubahQty(t, d) { var i = document.getElementById('v-' + t); i.value = Math.max(0, (parseInt(i.value) || 0) + d); hitungTotal(); }
   function hitungTotal() { var c = Math.max(0, parseInt(document.getElementById('v-c').value) || 0), f = Math.max(0, parseInt(document.getElementById('v-f').value) || 0), k = Math.max(0, parseInt(document.getElementById('v-k').value) || 0); document.getElementById('v-total').textContent = c + f + k; }
 
-  // FUNGSI REVIEW DATA DENGAN VALIDASI VISUAL GETAR (SHAKE)
+  // FUNGSI REVIEW DATA DENGAN VALIDASI VISUAL GETAR (SHAKE) & AUTO-SCROLL
   function reviewDataSebelumSimpan() {
     var tglEl = document.getElementById('inp-tanggal');
     var groupEl = document.getElementById('btn-group-select');
+    var areaEl = document.getElementById('sel-area');
     var nopolEl = document.getElementById('inp-nopol');
+    var qcEl = document.getElementById('inp-qc');
+    var loaderEl = document.getElementById('inp-loader');
     var totalBadge = document.getElementById('badge-total');
+    var cardMuatan = document.getElementById('card-muatan');
 
     var tgl = tglEl.value;
     var g = document.getElementById('inp-group').value;
+    var a = areaEl.value;
     var n = nopolEl.value.trim();
+    var qc = qcEl.value.trim();
+    var loader = loaderEl.value.trim();
     var t = document.getElementById('v-total').textContent;
     
     var isValid = true;
+    var firstInvalidEl = null;
 
     // Hapus kelas error sebelumnya jika ada
-    [tglEl, groupEl, nopolEl, totalBadge].forEach(el => el.classList.remove('error-shake'));
+    [tglEl, groupEl, areaEl, nopolEl, totalBadge, qcEl, loaderEl].forEach(el => el.classList.remove('error-shake'));
 
-    // Validasi satu per satu
-    if (!tgl) { tglEl.classList.add('error-shake'); isValid = false; }
-    if (!g) { groupEl.classList.add('error-shake'); isValid = false; }
-    if (!n) { nopolEl.classList.add('error-shake'); isValid = false; }
-    if (t == "0") { totalBadge.classList.add('error-shake'); isValid = false; }
+    // Validasi satu per satu dan catat elemen pertama yang kosong untuk di-scroll
+    if (!tgl) { tglEl.classList.add('error-shake'); isValid = false; if(!firstInvalidEl) firstInvalidEl = tglEl; }
+    if (!g) { groupEl.classList.add('error-shake'); isValid = false; if(!firstInvalidEl) firstInvalidEl = groupEl; }
+    if (!a) { areaEl.classList.add('error-shake'); isValid = false; if(!firstInvalidEl) firstInvalidEl = areaEl; }
+    if (!n) { nopolEl.classList.add('error-shake'); isValid = false; if(!firstInvalidEl) firstInvalidEl = nopolEl; }
+    if (t == "0") { totalBadge.classList.add('error-shake'); isValid = false; if(!firstInvalidEl) firstInvalidEl = cardMuatan; }
+    if (!qc) { qcEl.classList.add('error-shake'); isValid = false; if(!firstInvalidEl) firstInvalidEl = qcEl; }
+    if (!loader) { loaderEl.classList.add('error-shake'); isValid = false; if(!firstInvalidEl) firstInvalidEl = loaderEl; }
 
     if (!isValid) {
-       notifikasi('Lengkapi kolom yang berkedip merah!', 'error');
+       notifikasi('Lengkapi kolom wajib yang berkedip!', 'error');
+       
+       // Auto Scroll meluncur ke elemen pertama yang belum diisi
+       if (firstInvalidEl) {
+         firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+       }
        
        // Hapus kelas error setelah animasi selesai agar bisa digetarkan lagi nanti
        setTimeout(function() {
-          [tglEl, groupEl, nopolEl, totalBadge].forEach(el => el.classList.remove('error-shake'));
+          [tglEl, groupEl, areaEl, nopolEl, totalBadge, qcEl, loaderEl].forEach(el => el.classList.remove('error-shake'));
        }, 500);
        return; 
     }
@@ -345,14 +367,15 @@
     document.getElementById('rev-tanggal').textContent = tgl; 
     document.getElementById('rev-nopol').textContent = g + ' / ' + n.toUpperCase(); 
     document.getElementById('rev-total').textContent = t + ' Dus'; 
-    document.getElementById('rev-area').textContent = document.getElementById('sel-area').value; 
-    document.getElementById('rev-qc').textContent = document.getElementById('inp-qc').value || '-'; 
+    document.getElementById('rev-area').textContent = a; 
+    document.getElementById('rev-qc').textContent = qc; 
     document.getElementById('rev-ket').textContent = document.getElementById('inp-ket').value || '-';
     
     var o = document.getElementById('confirm-overlay'); 
     o.classList.remove('hidden'); void o.offsetWidth; o.classList.add('opacity-100'); 
     document.getElementById('confirm-modal').classList.add('open');
   }
+  
   function tutupReview() { document.getElementById('confirm-modal').classList.remove('open'); document.getElementById('confirm-overlay').classList.remove('opacity-100'); setTimeout(function(){ document.getElementById('confirm-overlay').classList.add('hidden'); }, 300); }
 
   // FUNGSI PANGGIL API VERCEL DENGAN DETEKTOR ERROR
