@@ -189,8 +189,10 @@
           <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Keterangan Tambahan <span class="text-gray-300 dark:text-gray-500 normal-case font-medium">(Opsional)</span></label>
           <textarea id="inp-ket" rows="2" placeholder="Catatan khusus..." class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary transition-colors"></textarea>
         </div>
-        <div id="photo-zone" onclick="document.getElementById('file-inp').click()" class="border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 rounded-2xl p-6 text-center cursor-pointer relative overflow-hidden transition-all hover:bg-gray-100">
-          <div id="photo-content"><span class="text-2xl block mb-1">📸</span><p class="text-[10px] font-bold text-gray-400 uppercase">Ambil Foto Muatan</p></div>
+        
+        <!-- KOTAK FOTO DIPERBESAR (Ditambahkan h-48 dan flex) agar proporsional -->
+        <div id="photo-zone" onclick="document.getElementById('file-inp').click()" class="border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 rounded-2xl h-48 flex flex-col items-center justify-center text-center cursor-pointer relative overflow-hidden transition-all hover:bg-gray-100">
+          <div id="photo-content"><span class="text-3xl block mb-2">📸</span><p class="text-[10px] font-bold text-gray-400 uppercase">Ambil Foto Muatan</p></div>
           <img id="photo-prev" class="absolute inset-0 w-full h-full object-cover hidden">
         </div>
         <input type="file" id="file-inp" accept="image/*" capture="environment" class="hidden" onchange="previewFoto(event)">
