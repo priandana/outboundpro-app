@@ -23,7 +23,8 @@
   #app-container { flex: 1; min-height: 0; width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; background-color: #F4F6F9; position: relative; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.1); }
   .main-content { flex: 1; width: 100%; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; }
   nav { height: 75px; width: 100%; background: white; border-top: 1px solid #edf2f7; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); z-index: 50; flex-shrink: 0; }
-  nav button { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; }
+  nav button { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; transition: all 0.2s; }
+  nav button:active { transform: scale(0.9); opacity: 0.7; }
   nav button.active::after { content: ''; position: absolute; top: 0; width: 20px; height: 4px; background: #DC2626; border-radius: 0 0 4px 4px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .spinner { display: inline-block; width: 1.2rem; height: 1.2rem; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
@@ -103,7 +104,8 @@
   }
 </style>
 </head>
-<body class="dark:bg-black">
+<!-- ontouchstart="" WAJIB DITAMBAHKAN UNTUK MENGAKTIFKAN :active DI HP -->
+<body class="dark:bg-black" ontouchstart="">
 
 <!-- LAYAR LOGIN PIN PETUGAS -->
 <div id="pin-screen" class="full-overlay hidden-splash">
@@ -152,10 +154,10 @@
     </div>
     <div class="flex items-center gap-2">
       <!-- TOMBOL LOGOUT BARU -->
-      <button onclick="konfirmasiLogout()" class="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center text-lg outline-none hover:scale-110 transition-transform">
+      <button onclick="konfirmasiLogout()" class="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center text-lg outline-none active:scale-90 transition-transform">
         🚪
       </button>
-      <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xl outline-none hover:scale-110 transition-transform">
+      <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xl outline-none active:scale-90 transition-transform">
         <span id="dark-icon">🌓</span>
       </button>
     </div>
@@ -183,7 +185,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1">
             <label class="text-[10px] font-bold text-gray-400 uppercase">Group <span class="text-red-500">*</span></label>
-            <button id="btn-group-select" onclick="bukaGroupSheet()" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-left flex justify-between items-center outline-none transition-colors">
+            <button id="btn-group-select" onclick="bukaGroupSheet()" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl px-4 py-3 text-left flex justify-between items-center outline-none transition-all active:scale-[0.98] active:bg-gray-200 dark:active:bg-gray-700">
               <span id="group-display" class="text-sm font-medium text-gray-400 truncate">Pilih Group</span>
             </button>
             <input type="hidden" id="inp-group">
@@ -216,25 +218,25 @@
           <div class="flex items-center justify-between bg-surface dark:bg-gray-800/50 p-3 rounded-2xl">
             <span class="text-sm font-bold dark:text-gray-200">❄️ Chiller</span>
             <div class="flex items-center bg-white dark:bg-darkCard rounded-xl p-1 shadow-sm">
-              <button onclick="ubahQty('c', -1)" class="w-9 h-9 font-bold dark:text-white active:bg-gray-100 dark:active:bg-gray-700 rounded-lg outline-none">−</button>
+              <button onclick="ubahQty('c', -1)" class="w-9 h-9 font-bold dark:text-white rounded-lg outline-none active:scale-90 active:bg-gray-200 dark:active:bg-gray-700 transition-all">−</button>
               <input type="number" id="v-c" value="0" min="0" class="w-10 text-center font-mono font-bold bg-transparent dark:text-white outline-none" oninput="hitungTotal()">
-              <button onclick="ubahQty('c', 1)" class="w-9 h-9 bg-blue-500 text-white rounded-lg font-bold outline-none">+</button>
+              <button onclick="ubahQty('c', 1)" class="w-9 h-9 bg-blue-500 text-white rounded-lg font-bold outline-none active:scale-90 active:opacity-80 transition-all">+</button>
             </div>
           </div>
           <div class="flex items-center justify-between bg-surface dark:bg-gray-800/50 p-3 rounded-2xl">
             <span class="text-sm font-bold dark:text-gray-200">🧊 Freezer</span>
             <div class="flex items-center bg-white dark:bg-darkCard rounded-xl p-1 shadow-sm">
-              <button onclick="ubahQty('f', -1)" class="w-9 h-9 font-bold dark:text-white active:bg-gray-100 dark:active:bg-gray-700 rounded-lg outline-none">−</button>
+              <button onclick="ubahQty('f', -1)" class="w-9 h-9 font-bold dark:text-white rounded-lg outline-none active:scale-90 active:bg-gray-200 dark:active:bg-gray-700 transition-all">−</button>
               <input type="number" id="v-f" value="0" min="0" class="w-10 text-center font-mono font-bold bg-transparent dark:text-white outline-none" oninput="hitungTotal()">
-              <button onclick="ubahQty('f', 1)" class="w-9 h-9 bg-cyan-500 text-white rounded-lg font-bold outline-none">+</button>
+              <button onclick="ubahQty('f', 1)" class="w-9 h-9 bg-cyan-500 text-white rounded-lg font-bold outline-none active:scale-90 active:opacity-80 transition-all">+</button>
             </div>
           </div>
           <div class="flex items-center justify-between bg-surface dark:bg-gray-800/50 p-3 rounded-2xl">
             <span class="text-sm font-bold dark:text-gray-200">🍫 Coklat</span>
             <div class="flex items-center bg-white dark:bg-darkCard rounded-xl p-1 shadow-sm">
-              <button onclick="ubahQty('k', -1)" class="w-9 h-9 font-bold dark:text-white active:bg-gray-100 dark:active:bg-gray-700 rounded-lg outline-none">−</button>
+              <button onclick="ubahQty('k', -1)" class="w-9 h-9 font-bold dark:text-white rounded-lg outline-none active:scale-90 active:bg-gray-200 dark:active:bg-gray-700 transition-all">−</button>
               <input type="number" id="v-k" value="0" min="0" class="w-10 text-center font-mono font-bold bg-transparent dark:text-white outline-none" oninput="hitungTotal()">
-              <button onclick="ubahQty('k', 1)" class="w-9 h-9 bg-amber-500 text-white rounded-lg font-bold outline-none">+</button>
+              <button onclick="ubahQty('k', 1)" class="w-9 h-9 bg-amber-500 text-white rounded-lg font-bold outline-none active:scale-90 active:opacity-80 transition-all">+</button>
             </div>
           </div>
         </div>
@@ -258,25 +260,25 @@
         </div>
         
         <!-- KOTAK FOTO -->
-        <div id="photo-zone" onclick="document.getElementById('file-inp').click()" class="border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 rounded-2xl h-48 flex flex-col items-center justify-center text-center cursor-pointer relative overflow-hidden transition-all hover:bg-gray-100">
+        <div id="photo-zone" onclick="document.getElementById('file-inp').click()" class="border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 rounded-2xl h-48 flex flex-col items-center justify-center text-center cursor-pointer relative overflow-hidden transition-all active:scale-[0.98] active:bg-gray-200 dark:active:bg-gray-800">
           <div id="photo-content"><span class="text-3xl block mb-2">📸</span><p class="text-[10px] font-bold text-gray-400 uppercase">Ambil Foto Muatan</p></div>
           <img id="photo-prev" class="absolute inset-0 w-full h-full object-cover hidden">
         </div>
         <input type="file" id="file-inp" accept="image/*" capture="environment" class="hidden" onchange="previewFoto(event)">
       </div>
 
-      <button id="sub-btn" onclick="reviewDataSebelumSimpan()" class="w-full bg-primary active:scale-95 text-white rounded-2xl py-4 font-bold shadow-lg shadow-red-100 dark:shadow-none transition-all flex items-center justify-center gap-3 outline-none mt-2">
+      <button id="sub-btn" onclick="reviewDataSebelumSimpan()" class="w-full bg-primary active:scale-95 active:opacity-90 text-white rounded-2xl py-4 font-bold shadow-lg shadow-red-100 dark:shadow-none transition-all flex items-center justify-center gap-3 outline-none mt-2">
         <span id="btn-loader" class="spinner hidden"></span>
         <span id="btn-text">SIMPAN DATA</span>
       </button>
-      <button id="cancel-edit" onclick="resetForm()" class="w-full text-gray-400 text-[10px] font-bold hidden no-print tracking-widest uppercase pb-4 outline-none">Batal</button>
+      <button id="cancel-edit" onclick="resetForm()" class="w-full text-gray-400 text-[10px] font-bold hidden no-print tracking-widest uppercase pb-4 outline-none active:opacity-50">Batal</button>
     </main>
 
     <!-- TAB RIWAYAT -->
     <main id="tab-riwayat" class="hidden p-5">
       <div class="flex justify-between items-end mb-4">
         <div><h2 class="text-xl font-bold dark:text-white font-sans">Riwayat</h2><input type="date" id="filter-tanggal" class="mt-1 bg-transparent text-[10px] font-bold text-primary outline-none" onchange="tarikDataServer()"></div>
-        <button onclick="window.print()" class="bg-white dark:bg-darkCard shadow-sm p-2 px-3 rounded-xl text-[10px] font-bold dark:text-white border border-gray-100 dark:border-gray-800 uppercase no-print outline-none">📄 Cetak</button>
+        <button onclick="window.print()" class="bg-white dark:bg-darkCard shadow-sm p-2 px-3 rounded-xl text-[10px] font-bold dark:text-white border border-gray-100 dark:border-gray-800 uppercase no-print outline-none active:scale-90 transition-transform">📄 Cetak</button>
       </div>
       <input type="text" id="hist-search" placeholder="Cari Nopol/Group..." class="w-full bg-white dark:bg-darkCard border border-gray-100 dark:border-gray-800 rounded-xl py-3 px-4 text-sm dark:text-white outline-none shadow-sm mb-4" oninput="renderRiwayat()">
       <div id="hist-list" class="space-y-3 pb-5"></div>
@@ -331,14 +333,14 @@
       <div class="flex flex-col gap-1 border-t border-gray-200 dark:border-gray-700 pt-2"><span class="text-gray-400 italic text-[11px]">Keterangan:</span><span id="rev-ket" class="dark:text-gray-100 font-medium">-</span></div>
     </div>
     <div class="flex gap-3">
-      <button onclick="tutupReview()" class="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 py-4 rounded-2xl font-bold outline-none">UBAH</button>
-      <button onclick="simpanDataFinal()" class="flex-2 w-full bg-primary text-white py-4 px-4 rounded-2xl font-bold shadow-lg shadow-red-100 outline-none">KIRIM SEKARANG</button>
+      <button onclick="tutupReview()" class="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 py-4 rounded-2xl font-bold outline-none active:scale-95 transition-transform">UBAH</button>
+      <button onclick="simpanDataFinal()" class="flex-2 w-full bg-primary text-white py-4 px-4 rounded-2xl font-bold shadow-lg shadow-red-100 outline-none active:scale-95 transition-transform">KIRIM SEKARANG</button>
     </div>
   </div>
 
   <div id="group-sheet-overlay" onclick="tutupGroupSheet()" class="overlay-bg absolute inset-0 hidden opacity-0 z-[90] bg-black/40 transition-opacity no-print"></div>
   <div id="group-sheet" class="modal-panel h-[75%] bg-white dark:bg-darkCard rounded-t-[40px] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)] no-print">
-    <div onclick="tutupGroupSheet()" class="w-full flex justify-center pt-4 pb-2 cursor-pointer"><div class="w-14 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div></div>
+    <div onclick="tutupGroupSheet()" class="w-full flex justify-center pt-4 pb-2 cursor-pointer active:opacity-50"><div class="w-14 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div></div>
     <div class="px-6 pb-4 border-b border-gray-100 dark:border-gray-800">
       <h3 class="text-lg font-bold dark:text-white mb-3 text-center">Pilih Group</h3>
       <input type="text" id="sheet-search" oninput="filterListGroup()" placeholder="Cari kode..." class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-4 text-sm dark:text-white outline-none focus:ring-2 focus:ring-primary">
@@ -356,8 +358,8 @@
     <h3 class="text-xl font-bold dark:text-white mb-2 text-center">Keluar Sistem</h3>
     <p class="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">Apakah Anda yakin ingin keluar? Anda harus memasukkan PIN lagi untuk masuk.</p>
     <div class="flex gap-3">
-      <button onclick="tutupLogout()" class="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 py-4 rounded-2xl font-bold outline-none">Batal</button>
-      <button onclick="keluarSistem()" class="flex-1 bg-red-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-red-100 dark:shadow-none outline-none">Ya, Keluar</button>
+      <button onclick="tutupLogout()" class="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 py-4 rounded-2xl font-bold outline-none active:scale-95 transition-transform">Batal</button>
+      <button onclick="keluarSistem()" class="flex-1 bg-red-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-red-100 dark:shadow-none outline-none active:scale-95 transition-transform">Ya, Keluar</button>
     </div>
   </div>
 
@@ -492,7 +494,7 @@
   function tutupGroupSheet() { document.getElementById('group-sheet').classList.remove('open'); document.getElementById('group-sheet-overlay').classList.remove('opacity-100'); setTimeout(function(){ document.getElementById('group-sheet-overlay').classList.add('hidden'); }, 300); }
   function filterListGroup() {
     var q = document.getElementById('sheet-search').value.trim().toUpperCase(), listEl = document.getElementById('sheet-list'), matches = q ? allGroups.filter(function(g){ return g.code.includes(q) || g.letter.includes(q); }) : allGroups, html = '', lastL = null;
-    matches.forEach(function(g) { if (g.letter !== lastL) { html += '<div class="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-red-50 dark:bg-red-800/50 rounded-2xl mb-1 mt-2 font-sans">Grup ' + g.letter + '</div>'; lastL = g.letter; } html += '<div onclick="pilihGroup(\'' + g.code + '\')" class="px-5 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between active:bg-red-50 rounded-2xl transition-all cursor-pointer"><span class="font-mono font-bold dark:text-white text-lg">' + g.code + '</span><span class="text-gray-300 text-xs font-sans">▶️</span></div>'; });
+    matches.forEach(function(g) { if (g.letter !== lastL) { html += '<div class="px-5 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-red-50 dark:bg-red-800/50 rounded-2xl mb-1 mt-2 font-sans">Grup ' + g.letter + '</div>'; lastL = g.letter; } html += '<div onclick="pilihGroup(\'' + g.code + '\')" class="px-5 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between active:bg-red-50 active:scale-[0.98] rounded-2xl transition-all cursor-pointer"><span class="font-mono font-bold dark:text-white text-lg">' + g.code + '</span><span class="text-gray-300 text-xs font-sans">▶️</span></div>'; });
     listEl.innerHTML = html || '<p class="text-center py-8 text-gray-400 text-xs">Tidak ditemukan</p>';
   }
   function pilihGroup(code) { document.getElementById('inp-group').value = code; document.getElementById('group-display').textContent = code; document.getElementById('group-display').classList.add('text-gray-900','dark:text-white','font-bold'); tutupGroupSheet(); }
@@ -732,7 +734,7 @@
       var fBadge = h.freezer > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-500 border border-cyan-100">F:'+h.freezer+'</span>' : '';
       var kBadge = h.coklat > 0 ? '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-100">K:'+h.coklat+'</span>' : '';
       var ketDiv = h.keterangan ? '<div class="bg-gray-50 dark:bg-gray-900/50 p-2 rounded-xl mb-3 text-[11px] text-gray-500 dark:text-gray-400 font-sans italic border-l-4 border-gray-200">"'+h.keterangan+'"</div>' : '';
-      htmlStr += '<div class="bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-800"><div class="flex justify-between items-start mb-3"><div class="flex gap-3"><div class="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center font-bold text-primary text-xs shadow-inner font-mono">' + h.group + '</div><div><h4 class="text-sm font-bold dark:text-white font-sans">' + h.nopol + '</h4><p class="text-[9px] text-gray-400 font-bold uppercase font-sans">' + h.area + ' • ' + (h.timestamp ? h.timestamp.split(' ')[1] : '') + '</p></div></div><div class="bg-red-50 dark:bg-red-900/30 text-primary px-3 py-1 rounded-lg text-sm font-bold font-mono border border-red-100 dark:border-red-800">' + h.total + '</div></div><div class="flex flex-wrap gap-1 mb-3">' + cBadge + fBadge + kBadge + '</div>' + ketDiv + '<div class="flex justify-between items-center border-t border-gray-50 dark:border-gray-800 pt-3 no-print"><div class="flex gap-2"><button onclick="editData(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Edit</button><button onclick="salinRekap(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl font-sans uppercase outline-none">Salin</button></div><a href="https://wa.me/?text=' + encodeURIComponent(waMsg) + '" target="_blank" class="text-[10px] font-bold text-wa bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-xl border border-green-100 font-sans outline-none">🟢 Share</a></div></div>';
+      htmlStr += '<div class="bg-white dark:bg-darkCard p-4 rounded-3xl shadow-sm border border-gray-50 dark:border-gray-800"><div class="flex justify-between items-start mb-3"><div class="flex gap-3"><div class="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center font-bold text-primary text-xs shadow-inner font-mono">' + h.group + '</div><div><h4 class="text-sm font-bold dark:text-white font-sans">' + h.nopol + '</h4><p class="text-[9px] text-gray-400 font-bold uppercase font-sans">' + h.area + ' • ' + (h.timestamp ? h.timestamp.split(' ')[1] : '') + '</p></div></div><div class="bg-red-50 dark:bg-red-900/30 text-primary px-3 py-1 rounded-lg text-sm font-bold font-mono border border-red-100 dark:border-red-800">' + h.total + '</div></div><div class="flex flex-wrap gap-1 mb-3">' + cBadge + fBadge + kBadge + '</div>' + ketDiv + '<div class="flex justify-between items-center border-t border-gray-50 dark:border-gray-800 pt-3 no-print"><div class="flex gap-2"><button onclick="editData(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl font-sans uppercase outline-none active:scale-95 transition-transform">Edit</button><button onclick="salinRekap(\'' + h.rowIndex + '\')" class="text-[10px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl font-sans uppercase outline-none active:scale-95 transition-transform">Salin</button></div><a href="https://wa.me/?text=' + encodeURIComponent(waMsg) + '" target="_blank" class="text-[10px] font-bold text-wa bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-xl border border-green-100 font-sans outline-none active:scale-95 transition-transform">🟢 Share</a></div></div>';
     }); el.innerHTML = htmlStr;
   }
 
