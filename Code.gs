@@ -4,8 +4,11 @@ const SHEET_NAME = 'outbound SAT';
 const FOLDER_ID = '1YEf89TIqfF7ICwOl1OHc8CAaG8FAVN3y'; // ID Folder Drive Anda
 
 function setupPermissions() {
-  DriveApp.getFolderById(FOLDER_ID);
+  const folder = DriveApp.getFolderById(FOLDER_ID);
   SpreadsheetApp.openById(SHEET_ID);
+  // Memancing izin tulis/createFile Google Drive
+  const testFile = folder.createFile("test_permission.txt", "OK");
+  testFile.setTrashed(true);
 }
 
 // Helper: Ambil atau Buat Tab Users
