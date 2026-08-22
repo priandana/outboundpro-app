@@ -1,7 +1,7 @@
 // --- KONFIGURASI UTAMA ---
 const SHEET_ID = '1fqAdBg-IzmFe-JLVcLxd5d6rFl04YANf75JpkHCHjdo'; // ID Spreadsheet Anda
 const SHEET_NAME = 'outbound SAT';
-const FOLDER_ID = '1Ll4-DKAnOOLKPa_zmRmFkxQun24vcJnM'; // ID Folder Drive Anda
+const FOLDER_ID = '1YEf89TIqfF7ICwOl1OHc8CAaG8FAVN3y'; // ID Folder Drive Anda
 
 function setupPermissions() {
   DriveApp.getFolderById(FOLDER_ID);
