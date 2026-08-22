@@ -1,0 +1,2455 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OutboundPro Admin — Panel Dashboard</title>
+
+  <!-- Google Fonts & Tailwind -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+  <!-- jsPDF + AutoTable for PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Chart.js CDN for Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"DM Sans"', 'sans-serif'],
+            mono: ['"Space Mono"', 'monospace'],
+          },
+          colors: {
+            primary: '#DC2626',
+            darkBg: '#090b11',
+            darkCard: '#131824',
+            darkBorder: '#1e293b'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
+    ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.5); }
+    
+    body {
+      background-color: #090b11;
+      color: #f8fafc;
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Glassmorphism Sidebar */
+    .sidebar {
+      background: rgba(19, 24, 36, 0.85);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+    }
+
+    /* Modal Animation */
+    .modal-backdrop {
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .modal-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-box {
+      transform: scale(0.95);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-backdrop.open .modal-box {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    /* Dashboard ambient glow */
+    .ambient-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      z-index: -1;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      display: inline-block;
+      width: 1.2rem;
+      height: 1.2rem;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* ===== CUSTOM SELECT DROPDOWN ===== */
+    .custom-select-wrapper { position: relative; user-select: none; }
+    .custom-select-trigger {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #0f172a; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 10px 14px; cursor: pointer;
+      font-size: 12px; color: #cbd5e1; font-weight: 600;
+      transition: all 0.2s ease;
+      gap: 8px;
+    }
+    .custom-select-trigger:hover { border-color: rgba(220,38,38,0.4); background: #1e293b; }
+    .custom-select-trigger.open { border-color: rgba(220,38,38,0.6); background: #1e293b; box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
+    .custom-select-arrow {
+      width: 16px; height: 16px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+      color: #475569;
+    }
+    .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); color: #dc2626; }
+    .custom-select-icon { font-size: 14px; flex-shrink: 0; }
+    .custom-select-panel {
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 999;
+      background: #131824; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+      opacity: 0; transform: translateY(-8px) scale(0.97);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16,1,0.3,1);
+    }
+    .custom-select-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+    .custom-select-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; font-size: 12px; font-weight: 600;
+      color: #94a3b8; cursor: pointer;
+      transition: all 0.15s ease; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .custom-select-option:last-child { border-bottom: none; }
+    .custom-select-option:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .custom-select-option.selected { color: #dc2626; background: rgba(220,38,38,0.08); }
+    .custom-select-option .opt-icon { font-size: 14px; flex-shrink: 0; }
+    .custom-select-option .opt-check { margin-left: auto; color: #dc2626; opacity: 0; font-size: 12px; }
+    .custom-select-option.selected .opt-check { opacity: 1; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row relative">
+
+  <!-- Ambient Glow Bubbles -->
+  <div class="ambient-glow bg-red-600 w-[400px] h-[400px] -top-40 -left-40"></div>
+  <div class="ambient-glow bg-amber-600 w-[350px] h-[350px] bottom-10 right-10"></div>
+
+  <!-- LOGIN SCREEN (ADMIN) -->
+  <div id="admin-login-screen" class="fixed inset-0 z-[10000] bg-darkBg flex items-center justify-center p-6 hidden">
+    <!-- Dynamic background glows inside login -->
+    <div class="absolute inset-0 overflow-hidden -z-10">
+      <div class="absolute w-[300px] h-[300px] bg-red-600/20 blur-[80px] -top-10 -left-10 animate-pulse"></div>
+      <div class="absolute w-[350px] h-[350px] bg-amber-600/10 blur-[90px] bottom-10 right-10"></div>
+    </div>
+    
+    <div class="bg-darkCard border border-darkBorder/40 rounded-3xl p-8 w-full max-w-[400px] shadow-2xl backdrop-blur-md">
+      <div class="flex flex-col items-center mb-8">
+        <div class="w-16 h-16 bg-gradient-to-tr from-red-600 to-red-500 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-lg shadow-red-950/20">📦</div>
+        <h2 class="text-white text-2xl font-bold tracking-tight">Outbound<span class="text-primary">Pro</span> Admin</h2>
+        <p class="text-gray-400 text-xs mt-1 uppercase tracking-widest font-semibold">Dashboard Control Center</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1.5 ml-1">Email Administrator</label>
+          <input id="login-email" type="email" placeholder="admin@outboundpro.app" autocomplete="email"
+            class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-primary transition-all">
+        </div>
+        <div>
+          <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1.5 ml-1">Password</label>
+          <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password"
+            class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-primary transition-all"
+            onkeydown="if(event.key==='Enter')loginAdmin()">
+        </div>
+        <p id="login-error" class="text-red-500 text-xs font-semibold text-center min-h-[16px]"></p>
+        <button onclick="loginAdmin()" id="btn-login" class="w-full py-4 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-red-900/30 hover:translate-y-[-1px] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+          <span id="login-spinner" class="spinner hidden"></span>
+          <span id="login-btn-text">MASUK DASHBOARD</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar w-full md:w-64 flex-shrink-0 flex flex-col z-50">
+    <!-- Header/Logo -->
+    <div class="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-red-500 flex items-center justify-center text-white text-lg shadow-md">📦</div>
+        <div>
+          <h1 class="text-base font-extrabold text-white tracking-tight leading-tight">Outbound<span class="text-primary">Pro</span></h1>
+          <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Admin Dashboard</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation List -->
+    <nav class="flex-1 px-4 py-6 space-y-1.5" style="border:none; background:transparent">
+      <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-white/5">
+        <span>🏠</span> Dashboard
+      </button>
+      <button onclick="switchTab('data')" id="nav-data" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-white/5">
+        <span>📋</span> Data Muatan
+      </button>
+      <button onclick="switchTab('users')" id="nav-users" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-white/5">
+        <span>👥</span> Pengguna
+      </button>
+      <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-white/5">
+        <span>📊</span> Analitik Muatan
+      </button>
+      <button onclick="switchTab('armada')" id="nav-armada" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-white/5">
+        <span>🚛</span> Manajemen Armada
+      </button>
+      <button onclick="switchTab('approval')" id="nav-approval" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-gray-400 hover:text-white hover:bg-white/5">
+        <span>✅</span> Approval
+        <span id="approval-badge" class="hidden ml-auto bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center animate-pulse">0</span>
+      </button>
+    </nav>
+
+    <!-- Footer Profile / Logout -->
+    <div class="p-4 border-t border-white/5 bg-black/20 flex items-center justify-between">
+      <div class="flex items-center gap-2.5 overflow-hidden">
+        <div class="w-8 h-8 rounded-lg bg-red-950/40 text-red-500 border border-red-500/20 flex items-center justify-center font-bold text-sm">A</div>
+        <div class="overflow-hidden">
+          <p id="admin-user-display" class="text-xs font-bold text-white truncate">-</p>
+          <p class="text-[9px] text-gray-400 uppercase tracking-wider font-bold">Administrator</p>
+        </div>
+      </div>
+      <button onclick="logoutAdmin()" class="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center text-gray-400 hover:text-red-500 active:scale-90 transition-all" title="Logout">
+        🚪
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-grow flex flex-col min-w-0 z-10" style="background:transparent">
+    
+    <!-- TOP STATUS HEADER -->
+    <header class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-darkCard/25 backdrop-blur-md">
+      <div>
+        <h2 id="page-title" class="text-lg font-bold text-white">Dashboard</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Vercel Status Indicator -->
+        <div class="bg-red-500/10 border border-red-500/25 px-2.5 py-1 rounded-lg text-[10px] font-bold text-primary flex items-center gap-1.5 shadow-sm">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> ONLINE
+        </div>
+        <div class="text-gray-400 text-xs font-semibold" id="clock-display">00:00:00</div>
+      </div>
+    </header>
+
+    <!-- SECTION CONTENT SCREENS -->
+    <div class="flex-grow p-8 overflow-y-auto">
+
+      <!-- ==================== SCREEN: DASHBOARD ==================== -->
+      <section id="tab-dashboard" class="tab-screen space-y-6">
+        <!-- KPI METRIC GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Muatan</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="kpi-total-load" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span class="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">ALL DATA</span>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Muatan Hari Ini</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="kpi-today-load" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span id="kpi-today-pct" class="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">0%</span>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Armada (Truk)</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="kpi-total-trucks" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span class="text-[10px] font-bold text-gray-400 bg-gray-500/10 px-1.5 py-0.5 rounded">RITASE</span>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Petugas Aktif</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="kpi-active-users" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span class="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">USER</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- GRAPHS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm md:col-span-2">
+            <h4 class="text-sm font-bold text-gray-300 mb-4">Tren Pemuatan Harian</h4>
+            <div class="h-64 relative">
+              <canvas id="chart-load-trend"></canvas>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm">
+            <h4 class="text-sm font-bold text-gray-300 mb-4">Distribusi Area Pengiriman</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart-area-dist"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT ACTIVITIES TABLE -->
+        <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-bold text-gray-300">Pemuatan Terbaru</h4>
+            <button onclick="switchTab('data')" class="text-xs font-bold text-red-500 hover:text-red-400 transition-colors uppercase tracking-wider">Lihat Semua Data →</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  <th class="pb-3 pl-3">Waktu</th>
+                  <th class="pb-3">Group</th>
+                  <th class="pb-3">Area</th>
+                  <th class="pb-3">Nopol</th>
+                  <th class="pb-3">Checker</th>
+                  <th class="pb-3 text-right pr-3">Total Qty</th>
+                </tr>
+              </thead>
+              <tbody id="dash-recent-list" class="divide-y divide-white/5 text-sm text-gray-300">
+                <tr><td colspan="6" class="py-8 text-center text-gray-500">Memuat data terbaru...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN: DATA ==================== -->
+      <section id="tab-data" class="tab-screen space-y-6 hidden">
+        <!-- FILTER BAR -->
+        <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm">
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+              <label class="text-[10px] font-bold uppercase text-gray-400 ml-1">Dari Tanggal</label>
+              <input type="date" id="filter-start-date" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-primary mt-1">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold uppercase text-gray-400 ml-1">Sampai Tanggal</label>
+              <input type="date" id="filter-end-date" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-primary mt-1">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold uppercase text-gray-400 ml-1">Filter Area</label>
+              <select id="filter-area" data-custom class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-primary mt-1">
+                <option value="">Semua Area</option>
+                <option value="BDG">BDG (Bandung)</option>
+                <option value="BDY">BDY (Bandung Raya)</option>
+                <option value="CJR">CJR (Cianjur)</option>
+                <option value="KWG">KWG (Karawang)</option>
+                <option value="PBN">PBN (Pamanukan)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold uppercase text-gray-400 ml-1">Cari Nopol / Group</label>
+              <input type="text" id="filter-search" placeholder="Cari..." class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-primary mt-1">
+            </div>
+            <div class="flex items-end gap-2 flex-wrap">
+              <button onclick="applyFilters()" class="flex-1 bg-primary hover:bg-red-700 text-white rounded-xl py-2.5 text-xs font-bold transition-all shadow-sm">APPLY</button>
+              <button onclick="exportCSV()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-gray-300 rounded-xl px-3 py-2.5 text-xs font-bold transition-all" title="Export CSV">📥 CSV</button>
+              <button onclick="exportExcel()" class="bg-emerald-900/40 hover:bg-emerald-800/60 border border-emerald-700/40 text-emerald-400 rounded-xl px-3 py-2.5 text-xs font-bold transition-all" title="Export Excel">📊 XLS</button>
+              <button onclick="exportPDF()" class="bg-blue-900/40 hover:bg-blue-800/60 border border-blue-700/40 text-blue-400 rounded-xl px-3 py-2.5 text-xs font-bold transition-all" title="Export PDF">📄 PDF</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MAIN DATA TABLE -->
+        <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  <th class="pb-3 pl-3">No</th>
+                  <th class="pb-3">Tanggal</th>
+                  <th class="pb-3">Group</th>
+                  <th class="pb-3">Area</th>
+                  <th class="pb-3">Nopol</th>
+                  <th class="pb-3">C</th>
+                  <th class="pb-3">F</th>
+                  <th class="pb-3">K</th>
+                  <th class="pb-3">D</th>
+                  <th class="pb-3">S</th>
+                  <th class="pb-3 font-mono text-primary font-bold">Total</th>
+                  <th class="pb-3">QC / Loader</th>
+                  <th class="pb-3">Keterangan</th>
+                  <th class="pb-3 text-center">Foto</th>
+                  <th class="pb-3 text-right pr-3">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="admin-data-list" class="divide-y divide-white/5 text-xs text-gray-300">
+                <tr><td colspan="15" class="py-12 text-center text-gray-500">Memuat data dari Google Sheets...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination / Stats -->
+          <div class="flex justify-between items-center border-t border-white/5 pt-4 mt-4 text-xs text-gray-400">
+            <div>Menampilkan <span id="data-count-display" class="font-bold text-white">0</span> baris data</div>
+            <div class="flex gap-2">
+              <button onclick="prevPage()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-white font-bold transition-all disabled:opacity-50" id="btn-prev-page">Sebelumnya</button>
+              <button onclick="nextPage()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-white font-bold transition-all disabled:opacity-50" id="btn-next-page">Berikutnya</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN: USERS ==================== -->
+      <section id="tab-users" class="tab-screen space-y-6 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- ADD USER FORM -->
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm">
+            <h4 class="text-sm font-bold text-gray-300 mb-5">Daftarkan Petugas Baru</h4>
+            <div class="space-y-4">
+              <div>
+                <label class="text-[10px] font-bold uppercase text-gray-400 block mb-1">Username (Tanpa spasi)</label>
+                <input type="text" id="usr-username" placeholder="Contoh: amril" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 outline-none focus:border-primary">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase text-gray-400 block mb-1">Password</label>
+                <input type="password" id="usr-password" placeholder="Minimal 6 karakter" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 outline-none focus:border-primary">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase text-gray-400 block mb-1">Pilihan Role</label>
+                <select id="usr-role" data-custom class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-primary">
+                  <option value="petugas">Petugas Lapangan (Mobile Access)</option>
+                  <option value="admin">Administrator (Web Access)</option>
+                </select>
+              </div>
+              <p id="usr-error" class="text-red-500 text-xs font-semibold text-center min-h-[16px]"></p>
+              <button onclick="registerNewUser()" id="btn-create-user" class="w-full py-3.5 bg-primary hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+                <span id="usr-spinner" class="spinner hidden"></span>
+                <span>DAFTARKAN PETUGAS</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- USER LIST TABLE -->
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm md:col-span-2">
+            <h4 class="text-sm font-bold text-gray-300 mb-5">Daftar Akun Terdaftar</h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    <th class="pb-3 pl-3">Petugas</th>
+                    <th class="pb-3">Email Firebase</th>
+                    <th class="pb-3">Role</th>
+                    <th class="pb-3">Tanggal Dibuat</th>
+                    <th class="pb-3 text-right pr-3">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-user-list" class="divide-y divide-white/5 text-xs text-gray-300">
+                  <tr><td colspan="5" class="py-8 text-center text-gray-500">Memuat data pengguna...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN: ANALYTICS ==================== -->
+      <section id="tab-analytics" class="tab-screen space-y-6 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm">
+            <h4 class="text-sm font-bold text-gray-300 mb-4">Aktivitas Checker Teraktif</h4>
+            <div class="h-64 relative">
+              <canvas id="chart-qc-activity"></canvas>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm">
+            <h4 class="text-sm font-bold text-gray-300 mb-4">Komposisi Muatan (C, F, K, D, S)</h4>
+            <div class="h-64 relative flex justify-center">
+              <canvas id="chart-load-composition"></canvas>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm md:col-span-2">
+            <h4 class="text-sm font-bold text-gray-300 mb-4">Laporan Efisiensi Ritase Armada per Hari</h4>
+            <div class="h-80 relative">
+              <canvas id="chart-armada-efficiency"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN: ARMADA ==================== -->
+      <section id="tab-armada" class="tab-screen space-y-6 hidden">
+        <!-- KPI Armada -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Armada</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="arm-kpi-total" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span class="text-[10px] font-bold text-gray-400 bg-gray-500/10 px-1.5 py-0.5 rounded">UNIT</span>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Armada Aktif</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="arm-kpi-aktif" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span class="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">AKTIF</span>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Non-Aktif</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="arm-kpi-nonaktif" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span class="text-[10px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">NON-AKTIF</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- FORM TAMBAH ARMADA -->
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm">
+            <h4 class="text-sm font-bold text-gray-300 mb-5">Tambah Armada Baru</h4>
+            <div class="space-y-4">
+              <div>
+                <label class="text-[10px] font-bold uppercase text-gray-400 block mb-1">Nomor Polisi</label>
+                <input type="text" id="arm-nopol" placeholder="Contoh: B 1234 CD" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 outline-none focus:border-primary uppercase" oninput="this.value=this.value.toUpperCase()">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase text-gray-400 block mb-1">Jenis Kendaraan</label>
+                <select id="arm-jenis" data-custom class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-primary">
+                  <option value="Box">Box</option>
+                  <option value="Pickup">Pickup</option>
+                  <option value="Engkel">Engkel</option>
+                  <option value="Colt Diesel">Colt Diesel</option>
+                  <option value="Fuso">Fuso</option>
+                  <option value="Wingbox">Wingbox</option>
+                  <option value="Reefer">Reefer (Chiller/Freezer)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase text-gray-400 block mb-1">Kapasitas (Kardus)</label>
+                <input type="number" id="arm-kapasitas" placeholder="Contoh: 150" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 outline-none focus:border-primary">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase text-gray-400 block mb-1">Area / Rute</label>
+                <select id="arm-area" data-custom class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-primary">
+                  <option value="BANDUNG 1">BANDUNG 1</option>
+                  <option value="BANDUNG 2">BANDUNG 2</option>
+                  <option value="KARAWANG">KARAWANG</option>
+                  <option value="PLUMBON">PLUMBON</option>
+                  <option value="DC CIANJUR">DC CIANJUR</option>
+                  <option value="Semua Area">Semua Area</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase text-gray-400 block mb-1">Status</label>
+                <select id="arm-status" data-custom class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-primary">
+                  <option value="Aktif">✅ Aktif</option>
+                  <option value="Non-Aktif">❌ Non-Aktif</option>
+                  <option value="Servis">🔧 Dalam Servis</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase text-gray-400 block mb-1">Keterangan</label>
+                <input type="text" id="arm-keterangan" placeholder="Opsional..." class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 outline-none focus:border-primary">
+              </div>
+              <p id="arm-error" class="text-red-500 text-xs font-semibold text-center min-h-[16px]"></p>
+              <button onclick="saveArmada()" id="btn-save-armada" class="w-full py-3.5 bg-primary hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+                <span id="arm-spinner" class="spinner hidden"></span>
+                <span>SIMPAN ARMADA</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TABLE ARMADA -->
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm md:col-span-2">
+            <div class="flex items-center justify-between mb-5">
+              <h4 class="text-sm font-bold text-gray-300">Daftar Armada Terdaftar</h4>
+              <div class="flex gap-2">
+                <input type="text" id="arm-search" placeholder="Cari nopol..." oninput="filterArmadaTable()" class="bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-primary w-36">
+                <select id="arm-filter-status" data-custom onchange="filterArmadaTable()" class="bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-primary">
+                  <option value="">Semua Status</option>
+                  <option value="Aktif">Aktif</option>
+                  <option value="Non-Aktif">Non-Aktif</option>
+                  <option value="Servis">Servis</option>
+                </select>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    <th class="pb-3 pl-3">Nopol</th>
+                    <th class="pb-3">Jenis</th>
+                    <th class="pb-3">Kapasitas</th>
+                    <th class="pb-3">Area</th>
+                    <th class="pb-3">Status</th>
+                    <th class="pb-3">Ritase</th>
+                    <th class="pb-3 text-right pr-3">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="armada-list" class="divide-y divide-white/5 text-xs text-gray-300">
+                  <tr><td colspan="7" class="py-8 text-center text-gray-500">Memuat data armada...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN: APPROVAL ==================== -->
+      <section id="tab-approval" class="tab-screen space-y-6 hidden">
+        <!-- KPI Approval -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending Approval</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="appr-kpi-pending" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">MENUNGGU</span>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Disetujui Hari Ini</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="appr-kpi-approved" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span class="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">APPROVED</span>
+            </div>
+          </div>
+          <div class="bg-darkCard border border-white/5 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ditolak Hari Ini</span>
+            <div class="flex justify-between items-baseline mt-4">
+              <span id="appr-kpi-rejected" class="text-3xl font-extrabold text-white font-mono">0</span>
+              <span class="text-[10px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">DITOLAK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Pending -->
+        <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h4 class="text-sm font-bold text-gray-300">Antrian Persetujuan Data Terlambat</h4>
+              <p class="text-[10px] text-gray-500 mt-0.5">Data H+2 ke atas yang menunggu konfirmasi admin</p>
+            </div>
+            <button onclick="fetchPendingApprovals()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-gray-300 px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5">
+              <span id="refresh-appr-spinner" class="spinner hidden" style="width:.8rem;height:.8rem;border-width:2px"></span>
+              🔄 Refresh
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  <th class="pb-3 pl-3">Petugas</th>
+                  <th class="pb-3">Submit</th>
+                  <th class="pb-3">Tgl. Carian</th>
+                  <th class="pb-3">Terlambat</th>
+                  <th class="pb-3">Group</th>
+                  <th class="pb-3">Area</th>
+                  <th class="pb-3">Nopol</th>
+                  <th class="pb-3 text-primary">Total</th>
+                  <th class="pb-3">Alasan</th>
+                  <th class="pb-3 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="approval-list" class="divide-y divide-white/5 text-xs text-gray-300">
+                <tr><td colspan="10" class="py-10 text-center text-gray-500">Memuat data pending...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- History Approved/Rejected -->
+        <div class="bg-darkCard border border-white/5 rounded-3xl p-6 shadow-sm">
+          <h4 class="text-sm font-bold text-gray-300 mb-5">Riwayat Keputusan</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  <th class="pb-3 pl-3">Petugas</th>
+                  <th class="pb-3">Tgl. Carian</th>
+                  <th class="pb-3">Group</th>
+                  <th class="pb-3">Total</th>
+                  <th class="pb-3">Status</th>
+                  <th class="pb-3">Catatan Admin</th>
+                  <th class="pb-3">Waktu Keputusan</th>
+                </tr>
+              </thead>
+              <tbody id="approval-history-list" class="divide-y divide-white/5 text-xs text-gray-300">
+                <tr><td colspan="7" class="py-8 text-center text-gray-500">Belum ada riwayat keputusan.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==================== MODAL: EDIT RECORD ==================== -->
+  <div id="modal-edit-backdrop" class="modal-backdrop fixed inset-0 z-[2000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="modal-box bg-darkCard border border-darkBorder rounded-3xl p-6 w-full max-w-[500px] shadow-2xl relative">
+      <h3 class="text-lg font-bold text-white mb-4">Edit Data Pemuatan</h3>
+      
+      <div class="space-y-4">
+        <input type="hidden" id="edit-row-index">
+        <input type="hidden" id="edit-timestamp">
+        <input type="hidden" id="edit-photo-link">
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Group</label>
+            <input type="text" id="edit-group" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Area</label>
+            <input type="text" id="edit-area" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-primary">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Nopol</label>
+            <input type="text" id="edit-nopol" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Tanggal</label>
+            <input type="text" id="edit-tanggal" placeholder="DD/MM/YYYY" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-primary">
+          </div>
+        </div>
+
+        <div class="border-t border-white/5 pt-4">
+          <label class="text-[10px] font-bold text-gray-400 uppercase block mb-2">Jumlah Muatan (Barang)</label>
+          <div class="grid grid-cols-5 gap-2">
+            <div>
+              <span class="text-[9px] block text-center text-blue-400 mb-1">Chiller</span>
+              <input type="number" id="edit-chiller" value="0" class="w-full text-center bg-slate-900 border border-slate-700/50 rounded-lg py-1.5 text-xs text-white outline-none focus:border-primary">
+            </div>
+            <div>
+              <span class="text-[9px] block text-center text-cyan-400 mb-1">Freezer</span>
+              <input type="number" id="edit-freezer" value="0" class="w-full text-center bg-slate-900 border border-slate-700/50 rounded-lg py-1.5 text-xs text-white outline-none focus:border-primary">
+            </div>
+            <div>
+              <span class="text-[9px] block text-center text-amber-500 mb-1">Coklat</span>
+              <input type="number" id="edit-coklat" value="0" class="w-full text-center bg-slate-900 border border-slate-700/50 rounded-lg py-1.5 text-xs text-white outline-none focus:border-primary">
+            </div>
+            <div>
+              <span class="text-[9px] block text-center text-green-500 mb-1">Dus</span>
+              <input type="number" id="edit-dus" value="0" class="w-full text-center bg-slate-900 border border-slate-700/50 rounded-lg py-1.5 text-xs text-white outline-none focus:border-primary">
+            </div>
+            <div>
+              <span class="text-[9px] block text-center text-violet-500 mb-1">S.foam</span>
+              <input type="number" id="edit-sterofoam" value="0" class="w-full text-center bg-slate-900 border border-slate-700/50 rounded-lg py-1.5 text-xs text-white outline-none focus:border-primary">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 border-t border-white/5 pt-4">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Checker (QC)</label>
+            <input type="text" id="edit-qc" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Loader</label>
+            <input type="text" id="edit-loader" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-primary">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Keterangan</label>
+          <textarea id="edit-keterangan" rows="2" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-primary"></textarea>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6 border-t border-white/5 pt-4">
+        <button onclick="closeEditModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded-xl text-xs font-bold transition-all">BATAL</button>
+        <button onclick="saveRecordEdit()" id="btn-save-edit" class="flex-1 py-3 bg-primary hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+          <span id="save-edit-spinner" class="spinner hidden"></span>
+          <span>UPDATE DATA</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: EDIT ARMADA ==================== -->
+  <div id="modal-edit-armada-backdrop" class="modal-backdrop fixed inset-0 z-[2000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="modal-box bg-darkCard border border-darkBorder rounded-3xl p-6 w-full max-w-[480px] shadow-2xl relative">
+      <h3 class="text-lg font-bold text-white mb-1">Edit Data Armada</h3>
+      <p class="text-xs text-gray-400 mb-5">Perbarui informasi kendaraan di bawah ini.</p>
+      <input type="hidden" id="edit-arm-rowindex">
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Nomor Polisi</label>
+            <input type="text" id="edit-arm-nopol" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-primary uppercase" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Jenis Kendaraan</label>
+            <select id="edit-arm-jenis" data-custom class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-primary">
+              <option value="Box">Box</option>
+              <option value="Pickup">Pickup</option>
+              <option value="Engkel">Engkel</option>
+              <option value="Colt Diesel">Colt Diesel</option>
+              <option value="Fuso">Fuso</option>
+              <option value="Wingbox">Wingbox</option>
+              <option value="Reefer">Reefer (Chiller/Freezer)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Kapasitas (Kardus)</label>
+            <input type="number" id="edit-arm-kapasitas" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Area / Rute</label>
+            <select id="edit-arm-area" data-custom class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-primary">
+              <option value="BANDUNG 1">BANDUNG 1</option>
+              <option value="BANDUNG 2">BANDUNG 2</option>
+              <option value="KARAWANG">KARAWANG</option>
+              <option value="PLUMBON">PLUMBON</option>
+              <option value="DC CIANJUR">DC CIANJUR</option>
+              <option value="Semua Area">Semua Area</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Status</label>
+            <select id="edit-arm-status" data-custom class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-primary">
+              <option value="Aktif">✅ Aktif</option>
+              <option value="Non-Aktif">❌ Non-Aktif</option>
+              <option value="Servis">🔧 Dalam Servis</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Keterangan</label>
+            <input type="text" id="edit-arm-keterangan" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-primary">
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6 border-t border-white/5 pt-4">
+        <button onclick="closeEditArmadaModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded-xl text-xs font-bold transition-all">BATAL</button>
+        <button onclick="updateArmada()" id="btn-update-armada" class="flex-1 py-3 bg-primary hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+          <span id="update-arm-spinner" class="spinner hidden"></span>
+          <span>UPDATE ARMADA</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: PHOTO VIEWER ==================== -->
+  <div id="modal-photo-backdrop" onclick="closePhotoModal()" class="modal-backdrop fixed inset-0 z-[5000] bg-black/90 flex flex-col justify-center items-center p-4">
+    <div class="relative max-w-4xl max-h-[80vh] flex flex-col items-center">
+      <img id="modal-viewer-img" src="" class="max-w-full max-h-[70vh] object-contain rounded-2xl shadow-2xl mb-4">
+      <p id="modal-viewer-caption" class="text-white text-xs font-mono bg-white/10 px-6 py-2 rounded-full border border-white/20 uppercase tracking-widest text-center mb-4"></p>
+      <a id="modal-viewer-link" href="#" target="_blank" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-primary text-white border border-red-500/20 shadow-lg shadow-red-950/20 hover:bg-red-700 active:scale-95 transition-all uppercase tracking-wider flex items-center gap-1.5" onclick="event.stopPropagation()">
+        <span>📂</span> Buka di Google Drive ↗
+      </a>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-10 right-10 z-[10000] bg-gray-900 border border-slate-700 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300">
+    <span id="toast-icon" class="text-lg">✅</span>
+    <span id="toast-msg" class="text-[11px] font-bold uppercase tracking-widest">PROSES BERHASIL</span>
+  </div>
+
+  <!-- AUDIO SUCCESS -->
+  <audio id="success-sound" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" preload="auto"></audio>
+
+  <!-- BUSINESS LOGIC SCRIPTS -->
+  <script>
+    // --- FIREBASE CONFIG ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz-xOnqHT9NSagY188vHg8QDLopxWzuXA",
+      authDomain: "outbound-7a30c.firebaseapp.com",
+      projectId: "outbound-7a30c",
+      storageBucket: "outbound-7a30c.firebasestorage.app",
+      messagingSenderId: "854011773736",
+      appId: "1:854011773736:web:5f05f39a4a9857666b461d"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const EMAIL_DOMAIN = "@outboundpro.app";
+
+    // Secondary Firebase Auth Instance for User Creation without Log Out
+    const secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryAuthApp");
+    const secondaryAuth = secondaryApp.auth();
+
+    // =========================================================================
+    // API URL dari Google Sheet Web App
+    // =========================================================================
+    var API_URL = "https://script.google.com/macros/s/AKfycbyTBGybObL13YlK2uz4oStUeIOnHZ9SqZK8WH_wRROG0tcxwg3PZqvSM-Iztn23ZBU1Tw/exec";
+
+    // Global variables
+    let databaseRecords = [];
+    let filteredRecords = [];
+    let registeredUsers = [];
+    let activeTab = 'dashboard';
+    let chartInstanceTrend = null;
+    let chartInstanceArea = null;
+    let chartInstanceQc = null;
+    let chartInstanceComposition = null;
+    let chartInstanceEfficiency = null;
+
+    // Pagination variables
+    let currentPage = 1;
+    const recordsPerPage = 15;
+
+    // Timer clocks
+    setInterval(() => {
+      var d = new Date();
+      document.getElementById('clock-display').textContent = d.toLocaleTimeString('id-ID');
+    }, 1000);
+
+    // =====================================================================
+    // AUTH LOGIC
+    // =====================================================================
+    auth.onAuthStateChanged(function(user) {
+      if (user) {
+        // Cek admin role
+        var email = user.email ? user.email.toLowerCase() : '';
+        var isSuperAdmin = email === 'superadmin@outboundpro.app';
+        var isAdminRole = email.indexOf('admin@') > -1 || (email.split('@')[0] && email.split('@')[0].indexOf('admin') > -1);
+        
+        if (isSuperAdmin || isAdminRole) {
+          // Dashboard admin login allowed
+          document.getElementById('admin-login-screen').classList.add('hidden');
+          document.getElementById('admin-user-display').textContent = email.replace(EMAIL_DOMAIN, '');
+          
+          switchTab('dashboard');
+          fetchInitialData();
+        } else {
+          // Regular petugas tried accessing admin dashboard
+          alert('Akses Ditolak! Anda bukan Administrator.');
+          auth.signOut();
+        }
+      } else {
+        // Not logged in
+        document.getElementById('admin-login-screen').classList.remove('hidden');
+      }
+    });
+
+    function loginAdmin() {
+      var email = document.getElementById('login-email').value.trim();
+      var pass = document.getElementById('login-password').value;
+      var errEl = document.getElementById('login-error');
+      var btnText = document.getElementById('login-btn-text');
+      var spinner = document.getElementById('login-spinner');
+      
+      errEl.textContent = '';
+      if (!email || !pass) { errEl.textContent = 'Email & password wajib diisi!'; return; }
+      
+      // Auto-append domain if simple username typed
+      if (email.indexOf('@') === -1) {
+        email = email + EMAIL_DOMAIN;
+      }
+
+      spinner.classList.remove('hidden');
+      btnText.textContent = 'MEMVERIFIKASI...';
+
+      auth.signInWithEmailAndPassword(email, pass)
+      .catch(function(err) {
+        spinner.classList.add('hidden');
+        btnText.textContent = 'MASUK DASHBOARD';
+        var msg = 'Kredensial login admin tidak valid!';
+        if(err.code === 'auth/too-many-requests') msg = 'Terlalu banyak percobaan. Silakan coba lagi nanti.';
+        errEl.textContent = msg;
+      });
+    }
+
+    function logoutAdmin() {
+      if (confirm("Apakah Anda yakin ingin keluar dari Dashboard Admin?")) {
+        auth.signOut().then(() => {
+          location.reload();
+        });
+      }
+    }
+
+    // =====================================================================
+    // CORE API CALL ACTIONS
+    // =====================================================================
+    function callBackend(action, payload) {
+      if (API_URL.indexOf("TARUH_URL") > -1) return Promise.reject("API URL belum di-set.");
+      return fetch(API_URL, {
+        method: 'POST',
+        mode: 'cors',
+        body: JSON.stringify({ action: action, payload: payload })
+      }).then(res => res.json());
+    }
+
+    function fetchInitialData() {
+      // Loading State
+      document.getElementById('dash-recent-list').innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-500">Memuat database dari server...</td></tr>';
+      document.getElementById('admin-data-list').innerHTML = '<tr><td colspan="15" class="py-12 text-center text-gray-500">Memuat database dari server...</td></tr>';
+      document.getElementById('admin-user-list').innerHTML = '<tr><td colspan="5" class="py-8 text-center text-gray-500">Memuat data pengguna...</td></tr>';
+
+      // Load records
+      fetch(API_URL + "?action=getAllData")
+      .then(res => res.json())
+      .then(res => {
+        if(res.status === 'ok') {
+          databaseRecords = res.data;
+          filteredRecords = [...databaseRecords];
+          
+          renderDashboardKPIs();
+          renderDashboardRecent();
+          renderDataTable();
+          buildCharts();
+        }
+      });
+
+      // Load users
+      fetch(API_URL + "?action=getUsers")
+      .then(res => res.json())
+      .then(res => {
+        if(res.status === 'ok') {
+          registeredUsers = res.data;
+          renderUsersTable();
+          document.getElementById('kpi-active-users').textContent = registeredUsers.length;
+        }
+      });
+    }
+
+    // =====================================================================
+    // TAB SYSTEM
+    // =====================================================================
+    function switchTab(tabId) {
+      activeTab = tabId;
+      document.querySelectorAll('.tab-screen').forEach(screen => screen.classList.add('hidden'));
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('bg-white/5', 'text-white', 'border-l-4', 'border-primary');
+        link.classList.add('text-gray-400');
+      });
+
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+      
+      var activeLink = document.getElementById('nav-' + tabId);
+      activeLink.classList.add('bg-white/5', 'text-white', 'border-l-4', 'border-primary');
+      activeLink.classList.remove('text-gray-400');
+
+      var pageTitles = { dashboard: 'Dashboard', data: 'Data Muatan', users: 'Pengguna', analytics: 'Analitik Muatan', armada: 'Manajemen Armada', approval: 'Approval Data Terlambat' };
+      document.getElementById('page-title').textContent = pageTitles[tabId] || tabId;
+
+      if (tabId === 'analytics') buildAnalyticsChartsOnly();
+      if (tabId === 'armada') loadArmadaData();
+      if (tabId === 'approval') fetchPendingApprovals();
+    }
+
+    // =====================================================================
+    // RENDERING FUNCTIONS
+    // =====================================================================
+    function renderDashboardKPIs() {
+      var totalLoad = 0;
+      var todayLoad = 0;
+      var trucksSet = new Set();
+      
+      var todayStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').join('/');
+      // Format todayStr standard in Spreadsheet O (DD/MM/YYYY or YYYY-MM-DD)
+      // Check timestamp or date
+      var d = new Date(), m = ''+(d.getMonth()+1), day = ''+d.getDate(), year = d.getFullYear(); 
+      if(m.length<2) m='0'+m; 
+      if(day.length<2) day='0'+day;
+      var targetYmd = [year, m, day].join('-');
+      var targetDmy = [day, m, year].join('/');
+
+      databaseRecords.forEach(row => {
+        totalLoad += row.total;
+        if(row.nopol) trucksSet.add(row.nopol.toUpperCase().trim());
+        
+        if (row.tanggal === targetYmd || row.tanggal === targetDmy || (row.timestamp && row.timestamp.indexOf(targetDmy) > -1)) {
+          todayLoad += row.total;
+        }
+      });
+
+      document.getElementById('kpi-total-load').textContent = totalLoad;
+      document.getElementById('kpi-today-load').textContent = todayLoad;
+      document.getElementById('kpi-total-trucks').textContent = trucksSet.size;
+
+      var percentage = totalLoad > 0 ? ((todayLoad / totalLoad) * 100).toFixed(1) : 0;
+      document.getElementById('kpi-today-pct').textContent = percentage + "% HARI INI";
+    }
+
+    function renderDashboardRecent() {
+      var listEl = document.getElementById('dash-recent-list');
+      var recent = databaseRecords.slice(0, 10);
+      
+      if(recent.length === 0) {
+        listEl.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-500">Belum ada record pemuatan.</td></tr>';
+        return;
+      }
+
+      var html = '';
+      recent.forEach(row => {
+        html += `
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3 pl-3 font-mono text-xs text-gray-400">${row.timestamp ? row.timestamp.split(' ')[0] : '-'}</td>
+            <td class="py-3 font-bold text-white"><span class="bg-slate-800 px-2 py-0.5 rounded font-mono">${row.group}</span></td>
+            <td class="py-3 font-semibold text-gray-300">${row.area}</td>
+            <td class="py-3 font-mono text-gray-300">${row.nopol}</td>
+            <td class="py-3 text-gray-400">${row.qc}</td>
+            <td class="py-3 text-right pr-3 font-mono font-bold text-primary">${row.total}</td>
+          </tr>
+        `;
+      });
+      listEl.innerHTML = html;
+    }
+
+    function renderDataTable() {
+      var listEl = document.getElementById('admin-data-list');
+      document.getElementById('data-count-display').textContent = filteredRecords.length;
+
+      if(filteredRecords.length === 0) {
+        listEl.innerHTML = '<tr><td colspan="15" class="py-12 text-center text-gray-500">Tidak ada data ditemukan untuk kriteria filter ini.</td></tr>';
+        return;
+      }
+
+      // Pagination math
+      var startIndex = (currentPage - 1) * recordsPerPage;
+      var endIndex = Math.min(startIndex + recordsPerPage, filteredRecords.length);
+      
+      // Update pagination buttons
+      document.getElementById('btn-prev-page').disabled = currentPage === 1;
+      document.getElementById('btn-next-page').disabled = endIndex >= filteredRecords.length;
+
+      var pageRecords = filteredRecords.slice(startIndex, endIndex);
+
+      var html = '';
+      pageRecords.forEach((row, i) => {
+        var num = startIndex + i + 1;
+        var pLink = row.photoLink ? `<button onclick="viewPhoto('${row.photoLink}', '${row.group}', '${row.nopol}')" class="text-lg bg-red-950/40 text-red-500 border border-red-500/25 px-2 py-0.5 rounded-lg active:scale-95 transition-all">📸</button>` : '<span class="text-gray-600">-</span>';
+        
+        html += `
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3.5 pl-3 font-bold text-gray-500">${num}</td>
+            <td class="py-3.5 font-mono text-gray-400">${row.timestamp ? row.timestamp.replace(' ', '<br>') : '-'}</td>
+            <td class="py-3.5"><span class="bg-slate-800/80 border border-slate-700/50 px-2 py-0.5 rounded font-mono font-bold text-white">${row.group}</span></td>
+            <td class="py-3.5 font-bold text-gray-300">${row.area}</td>
+            <td class="py-3.5 font-mono font-semibold">${row.nopol}${row.jamMuat || row.jamSelesai ? `<br><span class="text-[10px] text-gray-400 font-sans font-normal">⏱️ ${row.jamMuat || '-'} - ${row.jamSelesai || '-'}</span>` : ''}</td>
+            <td class="py-3.5 font-semibold text-blue-400">${row.chiller}</td>
+            <td class="py-3.5 font-semibold text-cyan-400">${row.freezer}</td>
+            <td class="py-3.5 font-semibold text-amber-500">${row.coklat}</td>
+            <td class="py-3.5 font-semibold text-green-500">${row.dus}</td>
+            <td class="py-3.5 font-semibold text-violet-500">${row.sterofoam}</td>
+            <td class="py-3.5 font-mono font-bold text-primary text-sm">${row.total}</td>
+            <td class="py-3.5 text-gray-400">${row.qc}<br><span class="text-[9px] font-bold text-gray-500">${row.loader}</span></td>
+            <td class="py-3.5 text-gray-400 italic max-w-[120px] truncate" title="${row.keterangan || ''}">"${row.keterangan || '-'}"</td>
+            <td class="py-3.5 text-center">${pLink}</td>
+            <td class="py-3.5 text-right pr-3 space-x-1.5">
+              <button onclick="openEditModal(${row.rowIndex})" class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-lg hover:bg-blue-500 hover:text-white transition-all active:scale-95">EDIT</button>
+              <button onclick="deleteRecordData(${row.rowIndex})" class="text-xs bg-red-600/10 text-red-500 border border-red-600/20 px-2.5 py-1 rounded-lg hover:bg-red-600 hover:text-white transition-all active:scale-95">HAPUS</button>
+            </td>
+          </tr>
+        `;
+      });
+      listEl.innerHTML = html;
+    }
+
+    function renderUsersTable() {
+      var listEl = document.getElementById('admin-user-list');
+      
+      if(registeredUsers.length === 0) {
+        listEl.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-gray-500">Belum ada akun petugas terdaftar.</td></tr>';
+        return;
+      }
+
+      var html = '';
+      registeredUsers.forEach(usr => {
+        html += `
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3.5 pl-3 font-bold text-white flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${usr.username}
+            </td>
+            <td class="py-3.5 font-mono text-gray-300">${usr.email}</td>
+            <td class="py-3.5"><span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${usr.role === 'admin' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-slate-800 text-slate-300'}">${usr.role.toUpperCase()}</span></td>
+            <td class="py-3.5 text-gray-400">${usr.dateCreated}</td>
+            <td class="py-3.5 text-right pr-3 space-x-1.5">
+              <button onclick="sendPasswordResetLink('${usr.email}')" class="text-[10px] bg-slate-800 border border-slate-700 text-gray-300 px-2.5 py-1 rounded-lg active:scale-95 transition-all">RESET PASS</button>
+              <button onclick="deleteUserDatabase(${usr.rowIndex}, '${usr.email}')" class="text-[10px] bg-red-500/10 text-red-500 border border-red-500/25 px-2.5 py-1 rounded-lg active:scale-95 transition-all">HAPUS</button>
+            </td>
+          </tr>
+        `;
+      });
+      listEl.innerHTML = html;
+    }
+
+    // =====================================================================
+    // FILTERS
+    // =====================================================================
+    function applyFilters() {
+      var start = document.getElementById('filter-start-date').value;
+      var end = document.getElementById('filter-end-date').value;
+      var area = document.getElementById('filter-area').value;
+      var query = document.getElementById('filter-search').value.trim().toUpperCase();
+
+      filteredRecords = databaseRecords.filter(row => {
+        // Date match (row.tanggal could be YYYY-MM-DD or DD/MM/YYYY)
+        if(row.tanggal) {
+          let rowYmd = row.tanggal;
+          if (row.tanggal.includes('/')) {
+            const p = row.tanggal.split('/');
+            if(p.length === 3) rowYmd = p[2] + "-" + p[1] + "-" + p[0];
+          }
+          if(start && rowYmd < start) return false;
+          if(end && rowYmd > end) return false;
+        }
+
+        // Area match
+        if(area && row.area !== area) return false;
+
+        // Query match
+        if(query) {
+          let matchGroup = row.group && row.group.toUpperCase().includes(query);
+          let matchNopol = row.nopol && row.nopol.toUpperCase().includes(query);
+          let matchQc = row.qc && row.qc.toUpperCase().includes(query);
+          if(!matchGroup && !matchNopol && !matchQc) return false;
+        }
+
+        return true;
+      });
+
+      currentPage = 1;
+      renderDataTable();
+      showToast("Filter Diterapkan!");
+    }
+
+    function prevPage() {
+      if(currentPage > 1) {
+        currentPage--;
+        renderDataTable();
+      }
+    }
+    function nextPage() {
+      var maxPage = Math.ceil(filteredRecords.length / recordsPerPage);
+      if(currentPage < maxPage) {
+        currentPage++;
+        renderDataTable();
+      }
+    }
+
+    // =====================================================================
+    // RECORD EDIT & DELETE ACTIONS
+    // =====================================================================
+    function openEditModal(rowIndex) {
+      var row = databaseRecords.find(x => x.rowIndex == rowIndex);
+      if(!row) return;
+
+      document.getElementById('edit-row-index').value = row.rowIndex;
+      document.getElementById('edit-timestamp').value = row.timestamp || '';
+      document.getElementById('edit-photo-link').value = row.photoLink || '';
+      document.getElementById('edit-group').value = row.group;
+      document.getElementById('edit-area').value = row.area;
+      document.getElementById('edit-nopol').value = row.nopol;
+      document.getElementById('edit-tanggal').value = row.tanggal || '';
+      
+      document.getElementById('edit-chiller').value = row.chiller;
+      document.getElementById('edit-freezer').value = row.freezer;
+      document.getElementById('edit-coklat').value = row.coklat;
+      document.getElementById('edit-dus').value = row.dus || 0;
+      document.getElementById('edit-sterofoam').value = row.sterofoam || 0;
+      
+      document.getElementById('edit-qc').value = row.qc;
+      document.getElementById('edit-loader').value = row.loader;
+      document.getElementById('edit-keterangan').value = row.keterangan || '';
+
+      document.getElementById('modal-edit-backdrop').classList.add('open');
+    }
+
+    function closeEditModal() {
+      document.getElementById('modal-edit-backdrop').classList.remove('open');
+    }
+
+    function saveRecordEdit() {
+      var idx = document.getElementById('edit-row-index').value;
+      var group = document.getElementById('edit-group').value.trim();
+      var area = document.getElementById('edit-area').value.trim();
+      var nopol = document.getElementById('edit-nopol').value.trim();
+      var tanggal = document.getElementById('edit-tanggal').value.trim();
+      
+      var chiller = parseInt(document.getElementById('edit-chiller').value) || 0;
+      var freezer = parseInt(document.getElementById('edit-freezer').value) || 0;
+      var coklat = parseInt(document.getElementById('edit-coklat').value) || 0;
+      var dus = parseInt(document.getElementById('edit-dus').value) || 0;
+      var sterofoam = parseInt(document.getElementById('edit-sterofoam').value) || 0;
+      var total = chiller + freezer + coklat + dus + sterofoam;
+
+      var qc = document.getElementById('edit-qc').value.trim();
+      var loader = document.getElementById('edit-loader').value.trim();
+      var keterangan = document.getElementById('edit-keterangan').value.trim();
+      var photoLink = document.getElementById('edit-photo-link').value;
+      var timestamp = document.getElementById('edit-timestamp').value;
+
+      if(!group || !area || !nopol || !qc || !loader) {
+        alert("Semua kolom bertanda bintang/wajib harus diisi!");
+        return;
+      }
+
+      var payload = {
+        rowIndex: idx,
+        timestamp: timestamp,
+        group: group,
+        area: area,
+        nopol: nopol,
+        chiller: chiller,
+        freezer: freezer,
+        coklat: coklat,
+        dus: dus,
+        sterofoam: sterofoam,
+        total: total,
+        qc: qc,
+        loader: loader,
+        keterangan: keterangan,
+        photoLink: photoLink,
+        tanggal: tanggal
+      };
+
+      var btn = document.getElementById('btn-save-edit');
+      var spinner = document.getElementById('save-edit-spinner');
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+
+      callBackend('simpanData', payload)
+      .then(res => {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        if(res.status === 'ok') {
+          showToast("Data Berhasil Diupdate!");
+          closeEditModal();
+          document.getElementById('success-sound').play();
+          fetchInitialData(); // Reload
+        } else {
+          alert("Gagal update: " + res.message);
+        }
+      });
+    }
+
+    function deleteRecordData(rowIndex) {
+      if(confirm("PERINGATAN! Apakah Anda yakin ingin menghapus record pemuatan baris ini dari spreadsheet? Tindakan ini tidak dapat dibatalkan.")) {
+        callBackend('deleteRecord', { rowIndex: rowIndex })
+        .then(res => {
+          if(res.status === 'ok') {
+            showToast("Record Dihapus!");
+            document.getElementById('success-sound').play();
+            fetchInitialData();
+          } else {
+            alert("Gagal menghapus: " + res.message);
+          }
+        });
+      }
+    }
+
+    // =====================================================================
+    // USER REGISTRATION & ACTIONS
+    // =====================================================================
+    function registerNewUser() {
+      var username = document.getElementById('usr-username').value.trim().toLowerCase();
+      var password = document.getElementById('usr-password').value;
+      var role = document.getElementById('usr-role').value;
+      var errEl = document.getElementById('usr-error');
+      var btn = document.getElementById('btn-create-user');
+      var spinner = document.getElementById('usr-spinner');
+
+      errEl.textContent = '';
+      if(!username) { errEl.textContent = 'Username wajib diisi!'; return; }
+      if(username.indexOf(' ') > -1) { errEl.textContent = 'Username tidak boleh memakai spasi!'; return; }
+      if(!password || password.length < 6) { errEl.textContent = 'Password minimal 6 karakter!'; return; }
+
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+
+      var email = username + (role === 'admin' ? 'admin' : '') + EMAIL_DOMAIN;
+
+      // Register account on secondary Firebase application (client-side)
+      secondaryAuth.createUserWithEmailAndPassword(email, password)
+      .then(function(cred) {
+        // Sign out secondary session immediately
+        secondaryAuth.signOut();
+        
+        // Save user reference row in Spreadsheet Google Sheets Users Tab
+        var payload = {
+          username: username,
+          email: email,
+          role: role
+        };
+
+        return callBackend('saveUser', payload);
+      })
+      .then(function(res) {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        if(res.status === 'ok') {
+          showToast("User Baru Terdaftar!");
+          document.getElementById('success-sound').play();
+          
+          document.getElementById('usr-username').value = '';
+          document.getElementById('usr-password').value = '';
+          
+          fetchInitialData(); // reload users list
+        } else {
+          alert("Gagal simpan referensi user ke Sheets: " + res.message);
+        }
+      })
+      .catch(function(err) {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        errEl.textContent = "Error: " + err.message;
+      });
+    }
+
+    function sendPasswordResetLink(email) {
+      if(confirm(`Kirim link reset password ke email: ${email}?`)) {
+        auth.sendPasswordResetEmail(email)
+        .then(() => {
+          showToast("Link Reset Dikirim!");
+        })
+        .catch(err => {
+          alert("Gagal reset: " + err.message);
+        });
+      }
+    }
+
+    function deleteUserDatabase(rowIndex, email) {
+      if(confirm(`PERINGATAN! Hapus user: ${email}?\nTindakan ini menghapus referensi di Sheets, Anda juga harus menghapusnya di Firebase Console.`)) {
+        callBackend('deleteUser', { rowIndex: rowIndex })
+        .then(res => {
+          if(res.status === 'ok') {
+            showToast("User Dihapus dari Sheets!");
+            fetchInitialData();
+          } else {
+            alert("Gagal: " + res.message);
+          }
+        });
+      }
+    }
+
+    // =====================================================================
+    // CHARTS RENDERING (CHART.JS)
+    // =====================================================================
+    function buildCharts() {
+      // 1. CHART TREN PEMUATAN HARIAN
+      var dateTotals = {};
+      databaseRecords.forEach(row => {
+        let dateStr = row.timestamp ? row.timestamp.split(' ')[0] : row.tanggal;
+        if(dateStr) {
+          dateTotals[dateStr] = (dateTotals[dateStr] || 0) + row.total;
+        }
+      });
+      // Sort and slice last 7 days
+      var sortedDates = Object.keys(dateTotals).sort().slice(-7);
+      var sortedValues = sortedDates.map(d => dateTotals[d]);
+
+      var ctx1 = document.getElementById('chart-load-trend').getContext('2d');
+      if (chartInstanceTrend) chartInstanceTrend.destroy();
+      chartInstanceTrend = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels: sortedDates,
+          datasets: [{
+            label: 'Qty Barang',
+            data: sortedValues,
+            borderColor: '#DC2626',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+
+      // 2. DISTRIBUSI AREA
+      var areaTotals = {};
+      databaseRecords.forEach(row => {
+        if(row.area) {
+          areaTotals[row.area] = (areaTotals[row.area] || 0) + row.total;
+        }
+      });
+      var areas = Object.keys(areaTotals);
+      var areaValues = areas.map(a => areaTotals[a]);
+
+      var ctx2 = document.getElementById('chart-area-dist').getContext('2d');
+      if (chartInstanceArea) chartInstanceArea.destroy();
+      chartInstanceArea = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: areas,
+          datasets: [{
+            data: areaValues,
+            backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#6366f1', '#a855f7'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#94a3b8', boxWidth: 12, padding: 15 }
+            }
+          }
+        }
+      });
+    }
+
+    function buildAnalyticsChartsOnly() {
+      // 1. CHECKER TERAKTIF
+      var qcTotals = {};
+      databaseRecords.forEach(row => {
+        if(row.qc) qcTotals[row.qc] = (qcTotals[row.qc] || 0) + 1; // Ritase count
+      });
+      var qcs = Object.keys(qcTotals).sort((a,b) => qcTotals[b] - qcTotals[a]).slice(0, 5);
+      var qcValues = qcs.map(q => qcTotals[q]);
+
+      var ctx3 = document.getElementById('chart-qc-activity').getContext('2d');
+      if(chartInstanceQc) chartInstanceQc.destroy();
+      chartInstanceQc = new Chart(ctx3, {
+        type: 'bar',
+        data: {
+          labels: qcs,
+          datasets: [{
+            data: qcValues,
+            backgroundColor: '#DC2626',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+            y: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+
+      // 2. KOMPOSISI MUATAN
+      var c=0, f=0, k=0, d=0, s=0;
+      databaseRecords.forEach(row => {
+        c += row.chiller;
+        f += row.freezer;
+        k += row.coklat;
+        d += (row.dus || 0);
+        s += (row.sterofoam || 0);
+      });
+
+      var ctx4 = document.getElementById('chart-load-composition').getContext('2d');
+      if(chartInstanceComposition) chartInstanceComposition.destroy();
+      chartInstanceComposition = new Chart(ctx4, {
+        type: 'polarArea',
+        data: {
+          labels: ['Chiller', 'Freezer', 'Coklat', 'Dus', 'Sterofoam'],
+          datasets: [{
+            data: [c, f, k, d, s],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.6)',
+              'rgba(6, 182, 212, 0.6)',
+              'rgba(245, 158, 11, 0.6)',
+              'rgba(16, 185, 129, 0.6)',
+              'rgba(139, 92, 246, 0.6)'
+            ],
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: { color: '#94a3b8', boxWidth: 10 }
+            }
+          },
+          scales: {
+            r: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              angleLines: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { backdropColor: 'transparent', color: '#94a3b8' }
+            }
+          }
+        }
+      });
+
+      // 3. ARMADA EFFICIENCY (RITASE PER HARI)
+      var dateTrucks = {};
+      databaseRecords.forEach(row => {
+        let dateStr = row.timestamp ? row.timestamp.split(' ')[0] : row.tanggal;
+        if(dateStr) {
+          dateTrucks[dateStr] = (dateTrucks[dateStr] || 0) + 1;
+        }
+      });
+      var dates = Object.keys(dateTrucks).sort().slice(-10);
+      var counts = dates.map(d => dateTrucks[d]);
+
+      var ctx5 = document.getElementById('chart-armada-efficiency').getContext('2d');
+      if(chartInstanceEfficiency) chartInstanceEfficiency.destroy();
+      chartInstanceEfficiency = new Chart(ctx5, {
+        type: 'bar',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Ritase Truk',
+            data: counts,
+            backgroundColor: 'rgba(249, 115, 22, 0.85)',
+            borderColor: '#f97316',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8', stepSize: 1 } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    // =====================================================================
+    // MANAJEMEN ARMADA — State & Logic
+    // =====================================================================
+    let armadaRecords = [];
+    let armadaFiltered = [];
+
+    function loadArmadaData() {
+      document.getElementById('armada-list').innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">Memuat data armada...</td></tr>';
+      fetch(API_URL + "?action=getArmada")
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === 'ok') {
+          armadaRecords = res.data || [];
+        } else {
+          // Jika API belum ada handler getArmada, gunakan data lokal dari databaseRecords
+          var nopolSet = {};
+          databaseRecords.forEach(row => {
+            if (row.nopol && !nopolSet[row.nopol.toUpperCase().trim()]) {
+              nopolSet[row.nopol.toUpperCase().trim()] = true;
+            }
+          });
+          armadaRecords = Object.keys(nopolSet).map((np, i) => ({
+            rowIndex: i + 1,
+            nopol: np,
+            jenis: 'Box',
+            kapasitas: '-',
+            area: 'Semua Area',
+            status: 'Aktif',
+            keterangan: '',
+            dateAdded: '-'
+          }));
+        }
+        armadaFiltered = [...armadaRecords];
+        renderArmadaTable();
+        updateArmadaKPIs();
+      })
+      .catch(() => {
+        // Fallback: derive from databaseRecords
+        var nopolSet = {};
+        databaseRecords.forEach(row => {
+          if (row.nopol) nopolSet[row.nopol.toUpperCase().trim()] = true;
+        });
+        armadaRecords = Object.keys(nopolSet).map((np, i) => ({
+          rowIndex: i + 1,
+          nopol: np,
+          jenis: 'Box',
+          kapasitas: '-',
+          area: 'Semua Area',
+          status: 'Aktif',
+          keterangan: '',
+          dateAdded: '-'
+        }));
+        armadaFiltered = [...armadaRecords];
+        renderArmadaTable();
+        updateArmadaKPIs();
+      });
+    }
+
+    function updateArmadaKPIs() {
+      var total = armadaRecords.length;
+      var aktif = armadaRecords.filter(a => a.status === 'Aktif').length;
+      var nonaktif = armadaRecords.filter(a => a.status !== 'Aktif').length;
+      document.getElementById('arm-kpi-total').textContent = total;
+      document.getElementById('arm-kpi-aktif').textContent = aktif;
+      document.getElementById('arm-kpi-nonaktif').textContent = nonaktif;
+    }
+
+    function getRitaseCount(nopol) {
+      if (!nopol) return 0;
+      return databaseRecords.filter(r => r.nopol && r.nopol.toUpperCase().trim() === nopol.toUpperCase().trim()).length;
+    }
+
+    function renderArmadaTable() {
+      var listEl = document.getElementById('armada-list');
+      if (armadaFiltered.length === 0) {
+        listEl.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">Belum ada data armada terdaftar.</td></tr>';
+        return;
+      }
+      var html = '';
+      armadaFiltered.forEach(arm => {
+        var ritase = getRitaseCount(arm.nopol);
+        var statusColor = arm.status === 'Aktif'
+          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+          : arm.status === 'Servis'
+          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+          : 'bg-red-500/10 text-red-400 border-red-500/20';
+        var statusIcon = arm.status === 'Aktif' ? '✅' : arm.status === 'Servis' ? '🔧' : '❌';
+        html += `
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3.5 pl-3 font-mono font-bold text-white">${arm.nopol}</td>
+            <td class="py-3.5 text-gray-300">${arm.jenis || '-'}</td>
+            <td class="py-3.5 text-gray-400">${arm.kapasitas || '-'} <span class="text-gray-500 text-[9px]">kardus</span></td>
+            <td class="py-3.5 text-gray-400">${arm.area || '-'}</td>
+            <td class="py-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-bold border ${statusColor}">${statusIcon} ${arm.status}</span>
+            </td>
+            <td class="py-3.5">
+              <span class="font-mono font-bold text-amber-400">${ritase}</span>
+              <span class="text-gray-500 text-[9px] ml-1">ritase</span>
+            </td>
+            <td class="py-3.5 text-right pr-3 space-x-1.5">
+              <button onclick="openEditArmadaModal(${arm.rowIndex})" class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-lg hover:bg-blue-500 hover:text-white transition-all active:scale-95">EDIT</button>
+              <button onclick="deleteArmada(${arm.rowIndex})" class="text-xs bg-red-600/10 text-red-500 border border-red-600/20 px-2.5 py-1 rounded-lg hover:bg-red-600 hover:text-white transition-all active:scale-95">HAPUS</button>
+            </td>
+          </tr>`;
+      });
+      listEl.innerHTML = html;
+    }
+
+    function filterArmadaTable() {
+      var q = (document.getElementById('arm-search').value || '').toUpperCase().trim();
+      var st = document.getElementById('arm-filter-status').value;
+      armadaFiltered = armadaRecords.filter(arm => {
+        if (q && !(arm.nopol || '').toUpperCase().includes(q)) return false;
+        if (st && arm.status !== st) return false;
+        return true;
+      });
+      renderArmadaTable();
+    }
+
+    function saveArmada() {
+      var nopol = document.getElementById('arm-nopol').value.trim().toUpperCase();
+      var jenis = document.getElementById('arm-jenis').value;
+      var kapasitas = document.getElementById('arm-kapasitas').value.trim();
+      var area = document.getElementById('arm-area').value;
+      var status = document.getElementById('arm-status').value;
+      var keterangan = document.getElementById('arm-keterangan').value.trim();
+      var errEl = document.getElementById('arm-error');
+      var btn = document.getElementById('btn-save-armada');
+      var spinner = document.getElementById('arm-spinner');
+
+      errEl.textContent = '';
+      if (!nopol) { errEl.textContent = 'Nomor polisi wajib diisi!'; return; }
+      if (armadaRecords.find(a => a.nopol === nopol)) { errEl.textContent = 'Nopol ini sudah terdaftar!'; return; }
+
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+
+      var payload = { nopol, jenis, kapasitas, area, status, keterangan };
+      callBackend('saveArmada', payload)
+      .then(res => {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        if (res.status === 'ok') {
+          showToast('Armada Berhasil Ditambahkan!');
+          document.getElementById('success-sound').play();
+          document.getElementById('arm-nopol').value = '';
+          document.getElementById('arm-kapasitas').value = '';
+          document.getElementById('arm-keterangan').value = '';
+          loadArmadaData();
+        } else {
+          // Jika backend belum support saveArmada, simpan lokal
+          var newRow = { rowIndex: Date.now(), nopol, jenis, kapasitas, area, status, keterangan, dateAdded: new Date().toLocaleDateString('id-ID') };
+          armadaRecords.unshift(newRow);
+          armadaFiltered = [...armadaRecords];
+          renderArmadaTable();
+          updateArmadaKPIs();
+          showToast('Armada Ditambahkan (Lokal)!');
+          document.getElementById('arm-nopol').value = '';
+          document.getElementById('arm-kapasitas').value = '';
+          document.getElementById('arm-keterangan').value = '';
+        }
+      })
+      .catch(() => {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        // Fallback simpan lokal
+        var newRow = { rowIndex: Date.now(), nopol, jenis, kapasitas, area, status, keterangan, dateAdded: new Date().toLocaleDateString('id-ID') };
+        armadaRecords.unshift(newRow);
+        armadaFiltered = [...armadaRecords];
+        renderArmadaTable();
+        updateArmadaKPIs();
+        showToast('Armada Ditambahkan!');
+        document.getElementById('arm-nopol').value = '';
+        document.getElementById('arm-kapasitas').value = '';
+        document.getElementById('arm-keterangan').value = '';
+      });
+    }
+
+    function openEditArmadaModal(rowIndex) {
+      var arm = armadaRecords.find(a => a.rowIndex == rowIndex);
+      if (!arm) return;
+      document.getElementById('edit-arm-rowindex').value = arm.rowIndex;
+      document.getElementById('edit-arm-nopol').value = arm.nopol || '';
+      document.getElementById('edit-arm-jenis').value = arm.jenis || 'Box';
+      document.getElementById('edit-arm-kapasitas').value = arm.kapasitas || '';
+      document.getElementById('edit-arm-area').value = arm.area || 'Semua Area';
+      document.getElementById('edit-arm-status').value = arm.status || 'Aktif';
+      document.getElementById('edit-arm-keterangan').value = arm.keterangan || '';
+      document.getElementById('modal-edit-armada-backdrop').classList.add('open');
+    }
+
+    function closeEditArmadaModal() {
+      document.getElementById('modal-edit-armada-backdrop').classList.remove('open');
+    }
+
+    function updateArmada() {
+      var rowIndex = document.getElementById('edit-arm-rowindex').value;
+      var nopol = document.getElementById('edit-arm-nopol').value.trim().toUpperCase();
+      var jenis = document.getElementById('edit-arm-jenis').value;
+      var kapasitas = document.getElementById('edit-arm-kapasitas').value.trim();
+      var area = document.getElementById('edit-arm-area').value;
+      var status = document.getElementById('edit-arm-status').value;
+      var keterangan = document.getElementById('edit-arm-keterangan').value.trim();
+
+      if (!nopol) { alert('Nomor polisi wajib diisi!'); return; }
+
+      var btn = document.getElementById('btn-update-armada');
+      var spinner = document.getElementById('update-arm-spinner');
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+
+      callBackend('updateArmada', { rowIndex, nopol, jenis, kapasitas, area, status, keterangan })
+      .then(res => {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        // Update lokal regardless of backend response
+        var idx = armadaRecords.findIndex(a => a.rowIndex == rowIndex);
+        if (idx > -1) {
+          armadaRecords[idx] = { ...armadaRecords[idx], nopol, jenis, kapasitas, area, status, keterangan };
+          armadaFiltered = [...armadaRecords];
+          renderArmadaTable();
+          updateArmadaKPIs();
+        }
+        closeEditArmadaModal();
+        showToast('Data Armada Diperbarui!');
+        document.getElementById('success-sound').play();
+      })
+      .catch(() => {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        var idx = armadaRecords.findIndex(a => a.rowIndex == rowIndex);
+        if (idx > -1) {
+          armadaRecords[idx] = { ...armadaRecords[idx], nopol, jenis, kapasitas, area, status, keterangan };
+          armadaFiltered = [...armadaRecords];
+          renderArmadaTable();
+          updateArmadaKPIs();
+        }
+        closeEditArmadaModal();
+        showToast('Data Armada Diperbarui!');
+      });
+    }
+
+    function deleteArmada(rowIndex) {
+      if (!confirm('Hapus data armada ini? Tindakan ini tidak dapat dibatalkan.')) return;
+      callBackend('deleteArmada', { rowIndex })
+      .then(() => {
+        armadaRecords = armadaRecords.filter(a => a.rowIndex != rowIndex);
+        armadaFiltered = armadaFiltered.filter(a => a.rowIndex != rowIndex);
+        renderArmadaTable();
+        updateArmadaKPIs();
+        showToast('Armada Dihapus!');
+      })
+      .catch(() => {
+        armadaRecords = armadaRecords.filter(a => a.rowIndex != rowIndex);
+        armadaFiltered = armadaFiltered.filter(a => a.rowIndex != rowIndex);
+        renderArmadaTable();
+        updateArmadaKPIs();
+        showToast('Armada Dihapus!');
+      });
+    }
+
+    // =====================================================================
+    // APPROVAL SYSTEM
+    // =====================================================================
+    let pendingApprovals = [];
+    let approvalHistory = [];
+
+    function fetchPendingApprovals() {
+      var spinner = document.getElementById('refresh-appr-spinner');
+      if (spinner) spinner.classList.remove('hidden');
+
+      // Strategi: scan databaseRecords yang sudah di-load admin
+      // Data pending ditandai dengan marker [PENDING APPROVAL] di field keterangan
+      // Ini bekerja tanpa perlu endpoint baru di backend
+      function scanFromLocalData() {
+        pendingApprovals = databaseRecords
+          .filter(r => r.keterangan && r.keterangan.includes('[PENDING APPROVAL'))
+          .map(r => {
+            // Parse info dari keterangan: "[PENDING APPROVAL +3hr] Alasan: ..."
+            var match = (r.keterangan || '').match(/\[PENDING APPROVAL \+(\d+)hr\] Alasan: ([^|]*)/);
+            var selisihHari = match ? parseInt(match[1]) : '?';
+            var alasanTerlambat = match ? match[2].trim() : '-';
+            return {
+              id: r.rowIndex,
+              rowIndex: r.rowIndex,
+              username: r.qc || r.loader || '-',
+              submitTime: r.timestamp || '-',
+              tanggal: r.tanggal || '-',
+              selisihHari: selisihHari,
+              group: r.group || '-',
+              area: r.area || '-',
+              nopol: r.nopol || '-',
+              total: r.total || 0,
+              alasanTerlambat: alasanTerlambat,
+              keteranganAsli: r.keterangan || '',
+              chiller: r.chiller, freezer: r.freezer, coklat: r.coklat, dus: r.dus, sterofoam: r.sterofoam,
+              status: 'PENDING'
+            };
+          });
+
+        if (spinner) spinner.classList.add('hidden');
+        renderApprovalTable();
+        updateApprovalBadge();
+      }
+
+      // Coba ambil dari backend dulu, jika gagal fallback ke scan lokal
+      fetch(API_URL + '?action=getPendingApprovals')
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === 'ok' && res.data && res.data.length > 0) {
+          // Backend support — gunakan data dari backend
+          pendingApprovals = (res.data || []).filter(r => r.status === 'PENDING');
+          approvalHistory = (res.data || []).filter(r => r.status !== 'PENDING');
+          if (spinner) spinner.classList.add('hidden');
+          renderApprovalTable();
+          updateApprovalBadge();
+        } else {
+          // Backend tidak support atau kosong — scan dari data lokal
+          scanFromLocalData();
+        }
+      })
+      .catch(() => {
+        // Backend error — fallback ke scan lokal
+        scanFromLocalData();
+      });
+    }
+
+    function updateApprovalBadge() {
+      var badge = document.getElementById('approval-badge');
+      var count = pendingApprovals.length;
+      if (count > 0) {
+        badge.textContent = count;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+      document.getElementById('appr-kpi-pending').textContent = count;
+
+      var todayStr = new Date().toLocaleDateString('id-ID');
+      var approvedToday = approvalHistory.filter(r => r.status === 'APPROVED' && r.decisionTime && r.decisionTime.includes(todayStr)).length;
+      var rejectedToday = approvalHistory.filter(r => r.status === 'REJECTED' && r.decisionTime && r.decisionTime.includes(todayStr)).length;
+      document.getElementById('appr-kpi-approved').textContent = approvedToday;
+      document.getElementById('appr-kpi-rejected').textContent = rejectedToday;
+    }
+
+    function renderApprovalTable() {
+      var listEl = document.getElementById('approval-list');
+      var histEl = document.getElementById('approval-history-list');
+
+      // Pending table
+      if (pendingApprovals.length === 0) {
+        listEl.innerHTML = `<tr><td colspan="10" class="py-10 text-center">
+          <div class="flex flex-col items-center gap-2">
+            <span class="text-3xl">✅</span>
+            <p class="text-emerald-500 font-bold text-xs">Tidak ada data yang menunggu approval</p>
+            <p class="text-gray-500 text-[10px]">Semua data petugas sudah diproses</p>
+          </div>
+        </td></tr>`;
+      } else {
+        var html = '';
+        pendingApprovals.forEach(row => {
+          html += `
+            <tr class="hover:bg-white/5 transition-colors">
+              <td class="py-3.5 pl-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-[9px]">${(row.username||'?')[0].toUpperCase()}</div>
+                  <span class="font-semibold text-white">${row.username || '-'}</span>
+                </div>
+              </td>
+              <td class="py-3.5 font-mono text-gray-400 text-[10px]">${row.submitTime || '-'}</td>
+              <td class="py-3.5 font-mono text-gray-300">${row.tanggal || '-'}</td>
+              <td class="py-3.5">
+                <span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded-full text-[9px] font-bold">+${row.selisihHari || '?'} hari</span>
+              </td>
+              <td class="py-3.5"><span class="bg-slate-800 px-2 py-0.5 rounded font-mono font-bold text-white">${row.group || '-'}</span></td>
+              <td class="py-3.5 text-gray-300">${row.area || '-'}</td>
+              <td class="py-3.5 font-mono">${row.nopol || '-'}</td>
+              <td class="py-3.5 font-mono font-bold text-primary">${row.total || 0}</td>
+              <td class="py-3.5 max-w-[140px]">
+                <span class="text-amber-400/80 italic text-[10px]" title="${row.alasanTerlambat || ''}">"${(row.alasanTerlambat || '-').slice(0,40)}${(row.alasanTerlambat||'').length>40?'...':''}"</span>
+              </td>
+              <td class="py-3.5 text-center">
+                <div class="flex gap-1.5 justify-center">
+                  <button onclick="approvePending('${row.id}')" class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg hover:bg-emerald-500 hover:text-white transition-all active:scale-95 font-bold">✔ SETUJUI</button>
+                  <button onclick="rejectPending('${row.id}')" class="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition-all active:scale-95 font-bold">✖ TOLAK</button>
+                </div>
+              </td>
+            </tr>`;
+        });
+        listEl.innerHTML = html;
+      }
+
+      // History table
+      if (approvalHistory.length === 0) {
+        histEl.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">Belum ada riwayat keputusan.</td></tr>';
+      } else {
+        var hHtml = '';
+        approvalHistory.slice(0, 20).forEach(row => {
+          var isApproved = row.status === 'APPROVED';
+          hHtml += `
+            <tr class="hover:bg-white/5 transition-colors">
+              <td class="py-3 pl-3 font-semibold text-gray-300">${row.username || '-'}</td>
+              <td class="py-3 font-mono text-gray-400">${row.tanggal || '-'}</td>
+              <td class="py-3"><span class="bg-slate-800 px-2 py-0.5 rounded font-mono text-white font-bold">${row.group || '-'}</span></td>
+              <td class="py-3 font-mono font-bold text-primary">${row.total || 0}</td>
+              <td class="py-3">
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold border ${isApproved ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}">${isApproved ? '✔ APPROVED' : '✖ DITOLAK'}</span>
+              </td>
+              <td class="py-3 text-gray-400 italic text-[10px]">${row.adminNote || '-'}</td>
+              <td class="py-3 font-mono text-gray-500 text-[10px]">${row.decisionTime || '-'}</td>
+            </tr>`;
+        });
+        histEl.innerHTML = hHtml;
+      }
+    }
+
+    function approvePending(id) {
+      if (!confirm('Setujui data ini? Marker [PENDING APPROVAL] akan dihapus dari keterangan.')) return;
+      var row = pendingApprovals.find(r => r.id == id || r.rowIndex == id);
+      if (!row) { showToast('Data tidak ditemukan!'); return; }
+
+      // Hapus marker [PENDING APPROVAL ...] dari keterangan
+      var ketBersih = (row.keteranganAsli || '')
+        .replace(/\s*\[PENDING APPROVAL[^\]]*\]\s*Alasan:[^|]*/g, '')
+        .replace(/\s*\|\s*$/g, '').trim();
+      ketBersih = ketBersih ? ketBersih + ' | [APPROVED by Admin ' + new Date().toLocaleDateString('id-ID') + ']' : '[APPROVED by Admin ' + new Date().toLocaleDateString('id-ID') + ']';
+
+      // Update via simpanData dengan keterangan yang sudah bersih
+      callBackend('simpanData', {
+        rowIndex: row.rowIndex,
+        tanggal: row.tanggal, group: row.group, area: row.area, nopol: row.nopol,
+        qc: row.username, loader: row.username,
+        keterangan: ketBersih,
+        chiller: row.chiller || 0, freezer: row.freezer || 0, coklat: row.coklat || 0,
+        dus: row.dus || 0, sterofoam: row.sterofoam || 0, total: row.total || 0
+      })
+      .then(() => {
+        doApproveLocally(id, row);
+        fetchInitialData(); // Refresh semua data
+      })
+      .catch(() => {
+        // Tetap approve secara lokal walaupun backend gagal
+        doApproveLocally(id, row);
+      });
+    }
+
+    function doApproveLocally(id, row) {
+      row.status = 'APPROVED';
+      row.decisionTime = new Date().toLocaleString('id-ID');
+      approvalHistory.unshift({...row});
+      pendingApprovals = pendingApprovals.filter(r => r.id != id && r.rowIndex != id);
+      renderApprovalTable();
+      updateApprovalBadge();
+      showToast('✅ Data Disetujui!');
+      document.getElementById('success-sound').play();
+    }
+
+    function rejectPending(id) {
+      var alasan = prompt('Alasan penolakan (opsional):');
+      if (alasan === null) return; // User cancel
+      var row = pendingApprovals.find(r => r.id == id || r.rowIndex == id);
+      if (!row) { showToast('Data tidak ditemukan!'); return; }
+
+      // Update keterangan: ganti [PENDING APPROVAL] jadi [REJECTED]
+      var ketReject = (row.keteranganAsli || '')
+        .replace(/\[PENDING APPROVAL[^\]]*\]\s*Alasan:[^|]*/g,
+          '[DITOLAK Admin ' + new Date().toLocaleDateString('id-ID') + ': ' + (alasan || 'Tanpa alasan') + ']');
+
+      callBackend('simpanData', {
+        rowIndex: row.rowIndex,
+        tanggal: row.tanggal, group: row.group, area: row.area, nopol: row.nopol,
+        qc: row.username, loader: row.username,
+        keterangan: ketReject,
+        chiller: row.chiller || 0, freezer: row.freezer || 0, coklat: row.coklat || 0,
+        dus: row.dus || 0, sterofoam: row.sterofoam || 0, total: row.total || 0
+      })
+      .then(() => {
+        doRejectLocally(id, row, alasan);
+        fetchInitialData();
+      })
+      .catch(() => {
+        doRejectLocally(id, row, alasan);
+      });
+    }
+
+    function doRejectLocally(id, row, alasan) {
+      row.status = 'REJECTED';
+      row.adminNote = alasan || 'Ditolak oleh Admin';
+      row.decisionTime = new Date().toLocaleString('id-ID');
+      approvalHistory.unshift({...row});
+      pendingApprovals = pendingApprovals.filter(r => r.id != id && r.rowIndex != id);
+      renderApprovalTable();
+      updateApprovalBadge();
+      showToast('❌ Data Ditolak!');
+    }
+
+    // Auto-refresh pending approvals every 60 seconds — rescan data lokal
+    setInterval(() => {
+      // Rescan databaseRecords yang mungkin sudah diupdate
+      var newPending = databaseRecords.filter(r => r.keterangan && r.keterangan.includes('[PENDING APPROVAL'));
+      if (newPending.length !== pendingApprovals.length) {
+        fetchPendingApprovals(); // Trigger full rescan
+      }
+    }, 60000);
+
+    // Also rescan after initial data load
+    setTimeout(() => {
+      fetchPendingApprovals();
+    }, 3000);
+
+    // =====================================================================
+    // CUSTOM SELECT DROPDOWNS
+    // =====================================================================
+    function initCustomSelects() {
+      document.querySelectorAll('select[data-custom]').forEach(select => {
+        buildCustomSelect(select);
+      });
+    }
+
+    function buildCustomSelect(select) {
+      if (select.dataset.customBuilt) return;
+      select.dataset.customBuilt = 'true';
+      select.style.display = 'none';
+
+      var opts = Array.from(select.options);
+      var wrapper = document.createElement('div');
+      wrapper.className = 'custom-select-wrapper';
+      select.parentNode.insertBefore(wrapper, select);
+      wrapper.appendChild(select);
+
+      var icons = {
+        'Box':'🚚','Pickup':'🚗','Engkel':'🚛','Colt Diesel':'🚚','Fuso':'🚛','Wingbox':'📦','Reefer':'❄️',
+        'Aktif':'✅','Non-Aktif':'❌','Servis':'🔧',
+        'BANDUNG 1':'📍','BANDUNG 2':'📍','KARAWANG':'📍','PLUMBON':'📍','DC CIANJUR':'📍','Semua Area':'🌏',
+        'petugas':'👤','admin':'🛡️'
+      };
+
+      var selectedOpt = opts.find(o => o.selected) || opts[0];
+      var currentIcon = icons[selectedOpt ? selectedOpt.value : ''] || '📌';
+
+      var trigger = document.createElement('div');
+      trigger.className = 'custom-select-trigger';
+      trigger.innerHTML = `
+        <span class="custom-select-icon">${currentIcon}</span>
+        <span class="custom-select-label flex-1">${selectedOpt ? selectedOpt.text : ''}</span>
+        <span class="custom-select-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      `;
+
+      var panel = document.createElement('div');
+      panel.className = 'custom-select-panel';
+
+      opts.forEach(opt => {
+        var icon = icons[opt.value] || '🟡';
+        var item = document.createElement('div');
+        item.className = 'custom-select-option' + (opt.selected ? ' selected' : '');
+        item.innerHTML = `<span class="opt-icon">${icon}</span><span class="flex-1">${opt.text}</span><span class="opt-check">✓</span>`;
+        item.addEventListener('click', () => {
+          select.value = opt.value;
+          select.dispatchEvent(new Event('change'));
+          trigger.querySelector('.custom-select-label').textContent = opt.text;
+          trigger.querySelector('.custom-select-icon').textContent = icon;
+          panel.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+          item.classList.add('selected');
+          trigger.classList.remove('open');
+          panel.classList.remove('open');
+        });
+        panel.appendChild(item);
+      });
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        var isOpen = trigger.classList.contains('open');
+        // Close all other dropdowns
+        document.querySelectorAll('.custom-select-trigger.open').forEach(t => {
+          t.classList.remove('open');
+          t.nextElementSibling && t.nextElementSibling.classList.remove('open');
+        });
+        if (!isOpen) {
+          trigger.classList.add('open');
+          panel.classList.add('open');
+        }
+      });
+
+      wrapper.appendChild(trigger);
+      wrapper.appendChild(panel);
+    }
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.custom-select-trigger.open').forEach(t => {
+        t.classList.remove('open');
+      });
+      document.querySelectorAll('.custom-select-panel.open').forEach(p => {
+        p.classList.remove('open');
+      });
+    });
+
+    // Init custom selects after DOM ready
+    setTimeout(() => initCustomSelects(), 100);
+
+    // =====================================================================
+    // EXPORT TO CSV
+    // =====================================================================
+    function exportCSV() {
+      if(filteredRecords.length === 0) { alert("Tidak ada data untuk diexport!"); return; }
+      
+      var csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "No,Timestamp,Group,Area,Nopol,Chiller,Freezer,Coklat,Dus,Sterofoam,Total,QC,Loader,Keterangan,Tanggal Carian\r\n";
+      
+      filteredRecords.forEach((row, index) => {
+        var line = [
+          index + 1,
+          `"${row.timestamp || ''}"`,
+          `"${row.group || ''}"`,
+          `"${row.area || ''}"`,
+          `"${row.nopol || ''}"`,
+          row.chiller,
+          row.freezer,
+          row.coklat,
+          row.dus || 0,
+          row.sterofoam || 0,
+          row.total,
+          `"${row.qc || ''}"`,
+          `"${row.loader || ''}"`,
+          `"${row.keterangan ? row.keterangan.replace(/"/g, '""') : ''}"`,
+          `"${row.tanggal || ''}"`
+        ].join(",");
+        csvContent += line + "\r\n";
+      });
+
+      var encodedUri = encodeURI(csvContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "OutboundPro_Rekap_Pemuatan.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("Data Berhasil Diexport ke CSV!");
+    }
+
+    // =====================================================================
+    // EXPORT TO EXCEL (SheetJS)
+    // =====================================================================
+    function exportExcel() {
+      if (filteredRecords.length === 0) { alert('Tidak ada data untuk diexport!'); return; }
+
+      var wsData = [
+        ['No', 'Timestamp', 'Group', 'Area', 'Nopol', 'Chiller', 'Freezer', 'Coklat', 'Dus', 'Sterofoam', 'Total', 'Checker (QC)', 'Loader', 'Keterangan', 'Tanggal']
+      ];
+
+      filteredRecords.forEach((row, i) => {
+        wsData.push([
+          i + 1,
+          row.timestamp || '',
+          row.group || '',
+          row.area || '',
+          row.nopol || '',
+          row.chiller || 0,
+          row.freezer || 0,
+          row.coklat || 0,
+          row.dus || 0,
+          row.sterofoam || 0,
+          row.total || 0,
+          row.qc || '',
+          row.loader || '',
+          row.keterangan || '',
+          row.tanggal || ''
+        ]);
+      });
+
+      var wb = XLSX.utils.book_new();
+      var ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // Auto column width
+      var colWidths = wsData[0].map((_, ci) => ({
+        wch: Math.max(...wsData.map(r => String(r[ci] || '').length), 10)
+      }));
+      ws['!cols'] = colWidths;
+
+      // Header style bold (SheetJS community edition has limited styling, but we set bold via cell meta)
+      XLSX.utils.book_append_sheet(wb, ws, 'Data Pemuatan');
+
+      var now = new Date();
+      var dateStr = now.toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `OutboundPro_Rekap_${dateStr}.xlsx`);
+      showToast('Export Excel Berhasil!');
+    }
+
+    // =====================================================================
+    // EXPORT TO PDF (jsPDF + AutoTable)
+    // =====================================================================
+    function exportPDF() {
+      if (filteredRecords.length === 0) { alert('Tidak ada data untuk diexport!'); return; }
+
+      const { jsPDF } = window.jspdf;
+      var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+      // Header
+      doc.setFillColor(9, 11, 17);
+      doc.rect(0, 0, 297, 30, 'F');
+      doc.setTextColor(220, 38, 38);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('OutboundPro', 14, 12);
+      doc.setTextColor(255, 255, 255);
+      doc.text(' — Rekap Data Pemuatan', 50, 12);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(148, 163, 184);
+      var now = new Date();
+      doc.text('Dicetak: ' + now.toLocaleString('id-ID'), 14, 20);
+      doc.text('Total Data: ' + filteredRecords.length + ' records', 14, 26);
+
+      // Table
+      var tableData = filteredRecords.map((row, i) => [
+        i + 1,
+        row.timestamp ? row.timestamp.split(' ')[0] : '-',
+        row.group || '-',
+        row.area || '-',
+        row.nopol || '-',
+        row.chiller || 0,
+        row.freezer || 0,
+        row.coklat || 0,
+        row.dus || 0,
+        row.sterofoam || 0,
+        row.total || 0,
+        row.qc || '-',
+        row.loader || '-'
+      ]);
+
+      doc.autoTable({
+        startY: 34,
+        head: [['No', 'Tanggal', 'Group', 'Area', 'Nopol', 'C', 'F', 'K', 'D', 'S', 'Total', 'Checker', 'Loader']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [220, 38, 38],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 7
+        },
+        bodyStyles: {
+          fillColor: [19, 24, 36],
+          textColor: [226, 232, 240],
+          fontSize: 7,
+          cellPadding: 2
+        },
+        alternateRowStyles: {
+          fillColor: [30, 41, 59]
+        },
+        columnStyles: {
+          0: { cellWidth: 8 },
+          4: { fontStyle: 'bold' },
+          10: { fontStyle: 'bold', textColor: [220, 38, 38] }
+        },
+        margin: { left: 14, right: 14 },
+        didDrawPage: (data) => {
+          // Footer
+          var pageCount = doc.internal.getNumberOfPages();
+          doc.setFontSize(7);
+          doc.setTextColor(100, 116, 139);
+          doc.text('OutboundPro Admin Dashboard — Halaman ' + data.pageNumber + ' dari ' + pageCount, 14, doc.internal.pageSize.height - 8);
+        }
+      });
+
+      var dateStr = now.toISOString().slice(0, 10);
+      doc.save(`OutboundPro_Rekap_${dateStr}.pdf`);
+      showToast('Export PDF Berhasil!');
+    }
+
+    // =====================================================================
+    // PHOTO VIEWER MODAL CONTROLS
+    // =====================================================================
+    function viewPhoto(url, group, nopol) {
+      var d = url;
+      var fileId = null;
+      var mt1 = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (mt1) {
+        fileId = mt1[1];
+      } else {
+        var mt2 = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+        if (mt2) fileId = mt2[1];
+      }
+      
+      if (fileId) {
+        d = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w800';
+      }
+      
+      document.getElementById('modal-viewer-img').src = d;
+      document.getElementById('modal-viewer-caption').textContent = group + " - " + nopol;
+      document.getElementById('modal-viewer-link').href = url;
+      document.getElementById('modal-photo-backdrop').classList.add('open');
+    }
+
+    function closePhotoModal() {
+      document.getElementById('modal-photo-backdrop').classList.remove('open');
+    }
+
+    // =====================================================================
+    // UTILITY TIMERS & TOASTS
+    // =====================================================================
+    let toastTimer = null;
+    function showToast(msg) {
+      var el = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg.toUpperCase();
+      el.classList.remove('translate-y-20', 'opacity-0');
+      
+      if(toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
