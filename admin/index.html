@@ -657,7 +657,11 @@
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                  <th class="pb-3 pl-3">Petugas</th>
+                  <th class="pb-3 pl-3 w-8">
+                    <input type="checkbox" id="appr-select-all" onchange="toggleSelectAllApprovals(this.checked)"
+                      class="w-4 h-4 accent-red-600 cursor-pointer" title="Pilih semua">
+                  </th>
+                  <th class="pb-3">Petugas</th>
                   <th class="pb-3">Submit</th>
                   <th class="pb-3">Tgl. Carian</th>
                   <th class="pb-3">Terlambat</th>
@@ -670,7 +674,7 @@
                 </tr>
               </thead>
               <tbody id="approval-list" class="divide-y divide-white/5 text-xs text-gray-300">
-                <tr><td colspan="10" class="py-10 text-center text-gray-500">Memuat data pending...</td></tr>
+                <tr><td colspan="11" class="py-10 text-center text-gray-500">Memuat data pending...</td></tr>
               </tbody>
             </table>
           </div>
@@ -865,6 +869,29 @@
     </div>
   </div>
 
+  <!-- BULK ACTION BAR (APPROVAL) -->
+  <div class="fixed inset-x-0 bottom-6 z-[3000] flex justify-center md:pl-64 pointer-events-none">
+    <div id="bulk-action-bar"
+      class="pointer-events-none opacity-0 translate-y-24 transition-all duration-300 bg-darkCard border border-white/10 rounded-2xl shadow-2xl shadow-black/60 px-5 py-3 flex items-center gap-4 flex-wrap justify-center">
+      <div class="flex items-center gap-2">
+        <span class="w-6 h-6 rounded-lg bg-red-500/15 text-red-400 flex items-center justify-center text-xs">✔</span>
+        <div>
+          <p class="text-xs font-bold text-white"><span id="bulk-count">0</span> data dipilih</p>
+          <p id="bulk-progress" class="text-[10px] text-gray-500">dari <span id="bulk-total">0</span> antrian</p>
+        </div>
+      </div>
+      <div class="h-8 w-px bg-white/10 hidden sm:block"></div>
+      <button onclick="toggleSelectAllApprovals(true)" id="bulk-btn-all"
+        class="text-[11px] font-bold text-gray-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2 rounded-xl transition-all">Pilih Semua</button>
+      <button onclick="clearApprovalSelection()" id="bulk-btn-clear"
+        class="text-[11px] font-bold text-gray-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2 rounded-xl transition-all">Batal</button>
+      <button onclick="bulkDecide('reject')" id="bulk-btn-reject"
+        class="text-[11px] font-bold bg-red-500/10 text-red-400 border border-red-500/25 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all active:scale-95 disabled:opacity-40">✖ TOLAK</button>
+      <button onclick="bulkDecide('approve')" id="bulk-btn-approve"
+        class="text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 px-4 py-2 rounded-xl hover:bg-emerald-500 hover:text-white transition-all active:scale-95 disabled:opacity-40">✔ SETUJUI</button>
+    </div>
+  </div>
+
   <!-- TOAST NOTIFICATION -->
   <div id="toast" class="fixed bottom-10 right-10 z-[10000] bg-gray-900 border border-slate-700 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300">
     <span id="toast-icon" class="text-lg">✅</span>
@@ -1052,6 +1079,7 @@
       if (tabId === 'analytics') buildAnalyticsChartsOnly();
       if (tabId === 'armada') loadArmadaData();
       if (tabId === 'approval') fetchPendingApprovals();
+      syncApprovalSelectionUI(); // sembunyikan/tampilkan bulk bar sesuai tab
     }
 
     // =====================================================================
@@ -1989,7 +2017,7 @@
 
       // Pending table
       if (pendingApprovals.length === 0) {
-        listEl.innerHTML = `<tr><td colspan="10" class="py-10 text-center">
+        listEl.innerHTML = `<tr><td colspan="11" class="py-10 text-center">
           <div class="flex flex-col items-center gap-2">
             <span class="text-3xl">✅</span>
             <p class="text-emerald-500 font-bold text-xs">Tidak ada data yang menunggu approval</p>
@@ -1999,9 +2027,14 @@
       } else {
         var html = '';
         pendingApprovals.forEach(row => {
+          var checked = selectedApprovals.has(String(row.id));
           html += `
-            <tr class="hover:bg-white/5 transition-colors">
+            <tr class="hover:bg-white/5 transition-colors ${checked ? 'bg-white/5' : ''}">
               <td class="py-3.5 pl-3">
+                <input type="checkbox" class="appr-row-check w-4 h-4 accent-red-600 cursor-pointer"
+                  ${checked ? 'checked' : ''} onchange="toggleApprovalRow('${row.id}', this.checked, this)">
+              </td>
+              <td class="py-3.5">
                 <div class="flex items-center gap-2">
                   <div class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-[9px]">${(row.username||'?')[0].toUpperCase()}</div>
                   <span class="font-semibold text-white">${row.username || '-'}</span>
@@ -2052,6 +2085,8 @@
         });
         histEl.innerHTML = hHtml;
       }
+
+      syncApprovalSelectionUI();
     }
 
     function approvePending(id) {
@@ -2134,8 +2169,153 @@
       showToast('❌ Data Ditolak!');
     }
 
+    // =====================================================================
+    // BULK APPROVAL (CHECKBOX + BOTTOM BAR)
+    // =====================================================================
+    let selectedApprovals = new Set();
+    let bulkBusy = false;
+    const BULK_CONCURRENCY = 3; // jumlah request paralel ke Apps Script
+
+    function toggleApprovalRow(id, checked, el) {
+      id = String(id);
+      if (checked) selectedApprovals.add(id); else selectedApprovals.delete(id);
+      if (el && el.closest('tr')) el.closest('tr').classList.toggle('bg-white/5', checked);
+      syncApprovalSelectionUI();
+    }
+
+    function toggleSelectAllApprovals(checked) {
+      if (bulkBusy) return;
+      selectedApprovals = new Set(checked ? pendingApprovals.map(r => String(r.id)) : []);
+      document.querySelectorAll('.appr-row-check').forEach(cb => {
+        cb.checked = checked;
+        if (cb.closest('tr')) cb.closest('tr').classList.toggle('bg-white/5', checked);
+      });
+      syncApprovalSelectionUI();
+    }
+
+    function clearApprovalSelection() { toggleSelectAllApprovals(false); }
+
+    function syncApprovalSelectionUI() {
+      // buang id yang sudah tidak ada di antrian
+      var valid = new Set(pendingApprovals.map(r => String(r.id)));
+      selectedApprovals.forEach(id => { if (!valid.has(id)) selectedApprovals.delete(id); });
+
+      var n = selectedApprovals.size, total = pendingApprovals.length;
+      var all = document.getElementById('appr-select-all');
+      if (all) {
+        all.checked = total > 0 && n === total;
+        all.indeterminate = n > 0 && n < total;
+      }
+      document.getElementById('bulk-count').textContent = n;
+      var totalEl = document.getElementById('bulk-total');
+      if (totalEl) totalEl.textContent = total;
+      document.getElementById('bulk-btn-all').classList.toggle('hidden', n === total);
+
+      var bar = document.getElementById('bulk-action-bar');
+      var show = n > 0 && activeTab === 'approval';
+      bar.classList.toggle('opacity-0', !show);
+      bar.classList.toggle('translate-y-24', !show);
+      bar.classList.toggle('pointer-events-none', !show);
+      bar.classList.toggle('pointer-events-auto', show);
+    }
+
+    function setBulkBusyUI(busy, text) {
+      ['bulk-btn-approve', 'bulk-btn-reject', 'bulk-btn-all', 'bulk-btn-clear'].forEach(id => {
+        document.getElementById(id).disabled = busy;
+      });
+      var all = document.getElementById('appr-select-all');
+      if (all) all.disabled = busy;
+      document.querySelectorAll('.appr-row-check').forEach(cb => cb.disabled = busy);
+      if (text) document.getElementById('bulk-progress').textContent = text;
+      else document.getElementById('bulk-progress').innerHTML = 'dari <span id="bulk-total">' + pendingApprovals.length + '</span> antrian';
+    }
+
+    function buildDecisionPayload(row, type, alasan, today) {
+      // Ambil data asli supaya kolom timestamp, loader, dan foto tidak tertimpa
+      var orig = databaseRecords.find(r => r.rowIndex == row.rowIndex) || {};
+      var ket = row.keteranganAsli || '';
+
+      if (type === 'approve') {
+        ket = ket.replace(/\s*\[PENDING APPROVAL[^\]]*\]\s*Alasan:[^|]*/g, '')
+                 .replace(/\s*\|\s*$/g, '').trim();
+        var tag = '[APPROVED by Admin ' + today + ']';
+        ket = ket ? ket + ' | ' + tag : tag;
+      } else {
+        ket = ket.replace(/\[PENDING APPROVAL[^\]]*\]\s*Alasan:[^|]*/g,
+          '[DITOLAK Admin ' + today + ': ' + (alasan || 'Tanpa alasan') + ']');
+      }
+
+      return {
+        rowIndex: row.rowIndex,
+        timestamp: orig.timestamp || row.submitTime || '',
+        tanggal: row.tanggal, group: row.group, area: row.area, nopol: row.nopol,
+        qc: orig.qc || row.username,
+        loader: orig.loader || row.username,
+        keterangan: ket,
+        chiller: row.chiller || 0, freezer: row.freezer || 0, coklat: row.coklat || 0,
+        dus: row.dus || 0, sterofoam: row.sterofoam || 0, total: row.total || 0,
+        photoLink: orig.photoLink || ''
+      };
+    }
+
+    async function bulkDecide(type) {
+      if (bulkBusy) return;
+      var rows = pendingApprovals.filter(r => selectedApprovals.has(String(r.id)));
+      if (!rows.length) return;
+
+      var alasan = '';
+      if (type === 'approve') {
+        if (!confirm('Setujui ' + rows.length + ' data terpilih?')) return;
+      } else {
+        alasan = prompt('Alasan penolakan untuk ' + rows.length + ' data (opsional):');
+        if (alasan === null) return;
+      }
+
+      bulkBusy = true;
+      var today = new Date().toLocaleDateString('id-ID');
+      var now = new Date().toLocaleString('id-ID');
+      var okRows = [], failedCount = 0, processed = 0;
+      setBulkBusyUI(true, 'Memproses 0/' + rows.length + '...');
+
+      for (var i = 0; i < rows.length; i += BULK_CONCURRENCY) {
+        var chunk = rows.slice(i, i + BULK_CONCURRENCY);
+        await Promise.all(chunk.map(async row => {
+          try {
+            var res = await callBackend('simpanData', buildDecisionPayload(row, type, alasan, today));
+            if (res && res.status === 'ok') okRows.push(row); else failedCount++;
+          } catch (e) { failedCount++; }
+          processed++;
+          document.getElementById('bulk-progress').textContent = 'Memproses ' + processed + '/' + rows.length + '...';
+        }));
+      }
+
+      // Update state lokal sekali saja (bukan per baris)
+      var okIds = new Set(okRows.map(r => String(r.id)));
+      okRows.forEach(row => {
+        row.status = type === 'approve' ? 'APPROVED' : 'REJECTED';
+        row.decisionTime = now;
+        if (type === 'reject') row.adminNote = alasan || 'Ditolak oleh Admin';
+        approvalHistory.unshift({ ...row });
+        selectedApprovals.delete(String(row.id));
+      });
+      pendingApprovals = pendingApprovals.filter(r => !okIds.has(String(r.id)));
+
+      bulkBusy = false;
+      setBulkBusyUI(false);
+      renderApprovalTable();
+      updateApprovalBadge();
+
+      if (type === 'approve') document.getElementById('success-sound').play();
+      showToast(
+        (type === 'approve' ? '✅ ' + okRows.length + ' Data Disetujui' : '❌ ' + okRows.length + ' Data Ditolak') +
+        (failedCount ? ' — ' + failedCount + ' gagal' : '')
+      );
+      fetchInitialData(); // sinkron ulang dengan Sheets
+    }
+
     // Auto-refresh pending approvals every 60 seconds — rescan data lokal
     setInterval(() => {
+      if (bulkBusy) return; // jangan ganggu proses massal yang sedang berjalan
       // Rescan databaseRecords yang mungkin sudah diupdate
       var newPending = databaseRecords.filter(r => r.keterangan && r.keterangan.includes('[PENDING APPROVAL'));
       if (newPending.length !== pendingApprovals.length) {
