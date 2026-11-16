@@ -1671,56 +1671,54 @@
     let armadaRecords = [];
     let armadaFiltered = [];
 
+    const ARMADA_LS_KEY = 'outboundpro_armada_local';
+    function normNopol(s) { return (s || '').toUpperCase().replace(/\s+/g, ' ').trim(); }
+    function getLocalArmada() {
+      try { return JSON.parse(localStorage.getItem(ARMADA_LS_KEY) || '[]'); } catch (e) { return []; }
+    }
+    function setLocalArmada(list) {
+      try { localStorage.setItem(ARMADA_LS_KEY, JSON.stringify(list)); } catch (e) {}
+    }
+    // simpan ulang semua armada bertanda local ke browser (dipanggil setelah edit/hapus)
+    function syncLocalArmada() { setLocalArmada(armadaRecords.filter(a => a.local)); }
+
+    function deriveArmadaFromRecords() {
+      var seen = {};
+      databaseRecords.forEach(row => { if (row.nopol) seen[normNopol(row.nopol)] = true; });
+      return Object.keys(seen).map((np, i) => ({
+        rowIndex: i + 1, nopol: np, jenis: 'Box', kapasitas: '-',
+        area: 'Semua Area', status: 'Aktif', keterangan: '', dateAdded: '-'
+      }));
+    }
+
     function loadArmadaData() {
-      document.getElementById('armada-list').innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">Memuat data armada...</td></tr>';
-      fetch(API_URL + "?action=getArmada")
-      .then(res => res.json())
-      .then(res => {
-        if (res.status === 'ok') {
-          armadaRecords = res.data || [];
-        } else {
-          // Jika API belum ada handler getArmada, gunakan data lokal dari databaseRecords
-          var nopolSet = {};
-          databaseRecords.forEach(row => {
-            if (row.nopol && !nopolSet[row.nopol.toUpperCase().trim()]) {
-              nopolSet[row.nopol.toUpperCase().trim()] = true;
-            }
-          });
-          armadaRecords = Object.keys(nopolSet).map((np, i) => ({
-            rowIndex: i + 1,
-            nopol: np,
-            jenis: 'Box',
-            kapasitas: '-',
-            area: 'Semua Area',
-            status: 'Aktif',
-            keterangan: '',
-            dateAdded: '-'
-          }));
-        }
-        armadaFiltered = [...armadaRecords];
-        renderArmadaTable();
-        updateArmadaKPIs();
-      })
-      .catch(() => {
-        // Fallback: derive from databaseRecords
-        var nopolSet = {};
-        databaseRecords.forEach(row => {
-          if (row.nopol) nopolSet[row.nopol.toUpperCase().trim()] = true;
+      document.getElementById('armada-list').innerHTML =
+        '<tr><td colspan="7" class="py-8 text-center text-gray-500">Memuat data armada...</td></tr>';
+
+      function finish(serverList, serverOk) {
+        var map = {};
+        (serverOk ? serverList : deriveArmadaFromRecords()).forEach(a => { map[normNopol(a.nopol)] = a; });
+
+        var keepLocal = [];
+        getLocalArmada().forEach(a => {
+          var key = normNopol(a.nopol);
+          var syncedToServer = serverOk && serverList.some(s => normNopol(s.nopol) === key);
+          if (syncedToServer) return;          // sudah ada di server, buang salinan lokal
+          map[key] = a;                         // belum ada di server, tampilkan versi lokal
+          keepLocal.push(a);
         });
-        armadaRecords = Object.keys(nopolSet).map((np, i) => ({
-          rowIndex: i + 1,
-          nopol: np,
-          jenis: 'Box',
-          kapasitas: '-',
-          area: 'Semua Area',
-          status: 'Aktif',
-          keterangan: '',
-          dateAdded: '-'
-        }));
+        setLocalArmada(keepLocal);
+
+        armadaRecords = Object.keys(map).map(k => map[k]);
         armadaFiltered = [...armadaRecords];
         renderArmadaTable();
         updateArmadaKPIs();
-      });
+      }
+
+      fetch(API_URL + "?action=getArmada")
+        .then(res => res.json())
+        .then(res => finish(res.data || [], res.status === 'ok'))
+        .catch(() => finish([], false));
     }
 
     function updateArmadaKPIs() {
@@ -1786,7 +1784,7 @@
     }
 
     function saveArmada() {
-      var nopol = document.getElementById('arm-nopol').value.trim().toUpperCase();
+      var nopol = normNopol(document.getElementById('arm-nopol').value);
       var jenis = document.getElementById('arm-jenis').value;
       var kapasitas = document.getElementById('arm-kapasitas').value.trim();
       var area = document.getElementById('arm-area').value;
@@ -1798,50 +1796,37 @@
 
       errEl.textContent = '';
       if (!nopol) { errEl.textContent = 'Nomor polisi wajib diisi!'; return; }
-      if (armadaRecords.find(a => a.nopol === nopol)) { errEl.textContent = 'Nopol ini sudah terdaftar!'; return; }
+      // abaikan nopol turunan dari data muatan (kapasitas '-') supaya tetap bisa didaftarkan lengkap
+      if (armadaRecords.find(a => normNopol(a.nopol) === nopol && a.kapasitas !== '-')) {
+        errEl.textContent = 'Nopol ini sudah terdaftar!'; return;
+      }
+
+      // simpan lokal dulu supaya tidak hilang walau server gagal
+      var newRow = {
+        rowIndex: Date.now(), nopol, jenis, kapasitas, area, status, keterangan,
+        dateAdded: new Date().toLocaleDateString('id-ID'), local: true
+      };
+      var loc = getLocalArmada().filter(a => normNopol(a.nopol) !== nopol);
+      loc.unshift(newRow);
+      setLocalArmada(loc);
 
       btn.disabled = true;
       spinner.classList.remove('hidden');
 
-      var payload = { nopol, jenis, kapasitas, area, status, keterangan };
-      callBackend('saveArmada', payload)
-      .then(res => {
+      function done(synced) {
         btn.disabled = false;
         spinner.classList.add('hidden');
-        if (res.status === 'ok') {
-          showToast('Armada Berhasil Ditambahkan!');
-          document.getElementById('success-sound').play();
-          document.getElementById('arm-nopol').value = '';
-          document.getElementById('arm-kapasitas').value = '';
-          document.getElementById('arm-keterangan').value = '';
-          loadArmadaData();
-        } else {
-          // Jika backend belum support saveArmada, simpan lokal
-          var newRow = { rowIndex: Date.now(), nopol, jenis, kapasitas, area, status, keterangan, dateAdded: new Date().toLocaleDateString('id-ID') };
-          armadaRecords.unshift(newRow);
-          armadaFiltered = [...armadaRecords];
-          renderArmadaTable();
-          updateArmadaKPIs();
-          showToast('Armada Ditambahkan (Lokal)!');
-          document.getElementById('arm-nopol').value = '';
-          document.getElementById('arm-kapasitas').value = '';
-          document.getElementById('arm-keterangan').value = '';
-        }
-      })
-      .catch(() => {
-        btn.disabled = false;
-        spinner.classList.add('hidden');
-        // Fallback simpan lokal
-        var newRow = { rowIndex: Date.now(), nopol, jenis, kapasitas, area, status, keterangan, dateAdded: new Date().toLocaleDateString('id-ID') };
-        armadaRecords.unshift(newRow);
-        armadaFiltered = [...armadaRecords];
-        renderArmadaTable();
-        updateArmadaKPIs();
-        showToast('Armada Ditambahkan!');
+        showToast(synced ? 'Armada Berhasil Ditambahkan!' : 'Armada Tersimpan di Browser (belum masuk Sheets)');
+        document.getElementById('success-sound').play();
         document.getElementById('arm-nopol').value = '';
         document.getElementById('arm-kapasitas').value = '';
         document.getElementById('arm-keterangan').value = '';
-      });
+        loadArmadaData();
+      }
+
+      callBackend('saveArmada', { nopol, jenis, kapasitas, area, status, keterangan })
+        .then(res => done(res && res.status === 'ok'))
+        .catch(() => done(false));
     }
 
     function openEditArmadaModal(rowIndex) {
@@ -1884,11 +1869,12 @@
         // Update lokal regardless of backend response
         var idx = armadaRecords.findIndex(a => a.rowIndex == rowIndex);
         if (idx > -1) {
-          armadaRecords[idx] = { ...armadaRecords[idx], nopol, jenis, kapasitas, area, status, keterangan };
+          armadaRecords[idx] = { ...armadaRecords[idx], nopol, jenis, kapasitas, area, status, keterangan, local: armadaRecords[idx].local };
           armadaFiltered = [...armadaRecords];
           renderArmadaTable();
           updateArmadaKPIs();
         }
+        syncLocalArmada();
         closeEditArmadaModal();
         showToast('Data Armada Diperbarui!');
         document.getElementById('success-sound').play();
@@ -1898,11 +1884,12 @@
         spinner.classList.add('hidden');
         var idx = armadaRecords.findIndex(a => a.rowIndex == rowIndex);
         if (idx > -1) {
-          armadaRecords[idx] = { ...armadaRecords[idx], nopol, jenis, kapasitas, area, status, keterangan };
+          armadaRecords[idx] = { ...armadaRecords[idx], nopol, jenis, kapasitas, area, status, keterangan, local: armadaRecords[idx].local };
           armadaFiltered = [...armadaRecords];
           renderArmadaTable();
           updateArmadaKPIs();
         }
+        syncLocalArmada();
         closeEditArmadaModal();
         showToast('Data Armada Diperbarui!');
       });
@@ -1916,6 +1903,7 @@
         armadaFiltered = armadaFiltered.filter(a => a.rowIndex != rowIndex);
         renderArmadaTable();
         updateArmadaKPIs();
+        syncLocalArmada();
         showToast('Armada Dihapus!');
       })
       .catch(() => {
@@ -1923,6 +1911,7 @@
         armadaFiltered = armadaFiltered.filter(a => a.rowIndex != rowIndex);
         renderArmadaTable();
         updateArmadaKPIs();
+        syncLocalArmada();
         showToast('Armada Dihapus!');
       });
     }
